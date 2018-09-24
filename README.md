@@ -3,8 +3,6 @@
 A repository to organise my level 4 project.
 (Will be reorganised and renamed as project is completed.)
 
-```
-
 ## Structure
 
 ### informal_docs
