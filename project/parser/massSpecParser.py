@@ -118,7 +118,7 @@ def main():
 		else:
 			formulaCounts[dict["formula"]] = 1
 		
-	print("Number of files: " + str(len(list(glob.glob("*.ms*")))))
+	print("Number of files: " + str(len(list(glob.glob("*.ms")))))
 
 	print()
 	print("field counts")	
