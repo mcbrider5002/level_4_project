@@ -1,2 +1,6 @@
 *.gbk
 *.ms
+*.log
+*.aux
+*.pyc
+*.gz

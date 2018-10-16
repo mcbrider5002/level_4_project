@@ -19,12 +19,10 @@ def default_parser(dict, key, split_line):
 
 '''Parses line as one in a list of arrays of size 2 of related data items separated by spaces'''
 def ms2peaks_parser(dict, key, split_line):
-	
-	dict[key] += [np.array((split_line[0], split_line[1]))]
+	dict[key] += [np.array((split_line[0], split_line[1]), dtype=float)]
 	
 '''Parses line as a single instance of multiple data items, delimited by spaces'''
 def list_parser(dict, key, split_line):
-
 	dict[key] = split_line
 	
 ##############################	
@@ -44,7 +42,7 @@ parsing_modes = {
 
 '''Casts ms2peaks list to array at the end, once it's done being read in'''
 def ms2peaks_cleanup(dict, key):
-	dict[key] = np.array(dict[key])
+	dict[key] = np.array(dict[key], dtype=float)
 
 ###############################
 ###Cleanup Lookup Dictionary###
@@ -96,6 +94,9 @@ def parse_file(file):
 				continue
 			
 		line_parser(record, field, split_line) #pass current line off for parsing
+		
+	if(field in cleanup_dict): #perform any necessary cleanup on last field before finishing with file
+		cleanup_dict[field](record, field)
 	
 	return record
 
@@ -126,7 +127,7 @@ def main():
 	import time
 	times = []
 	
-	path = os.path.join(os.getcwd(), "parser")
+	path = os.path.join(os.getcwd(), "spectraData")
 	
 	#time small file
 	start = time.clock()
@@ -145,12 +146,12 @@ def main():
 	
 	#time all files but just reading things in as strings into a list, with no manipulation other than split()
 	start = time.clock()
-	stringList = []
+	string_list = []
 	os.chdir(path)
 	for filename in glob.glob("*.ms"):
 		file = open(filename, 'r')
 		for line in file:
-			stringList += line.split()
+			string_list += line.split()
 		file.close()
 	times += ["Time for all files, no manipulation: " + str(time.clock() - start)]
 	
