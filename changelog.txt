@@ -1,0 +1,48 @@
+-Significant reworking of complexity analysis and design decisions in informal_docs in progress, previously only considered some rather limited assumptions.
+
+-MassSpectrum
+	-Removed a lot of skeleton junk concerning 'breadth-first search' and the naive algorithm in MassSpectrum.py. 
+		I was planning to fill this in and benchmark it, but this isn't really a bottleneck right now and there are more important concerns.
+	-Number of sequence tags output was exponentially large with multiple subsequences having multiple possible tags... 
+		Changed this (representing multiple possibilities inline) and added a method to expand it back out, if desired.
+		This resulted in a change to provisional data structure layout, reversing the order of key:tag from compound:peaks to peak:compounds.
+	-Tag search now returns a dictionary of tags under length as keys rather than a list of tags.
+	-Added maximum mass finder
+	-Added sorting by mass
+	-Added ppm mass tolerance
+	-Added helpers to expand tag notation and flatten tag dictionary to list in light of these changes
+
+-MassSpectraAggregate
+	-Added convenient wrapper for aggregate operations on mass spectra (not necessarily efficient though).
+	-Added finding max mass
+	-Added finding max intensity
+	-Added sorting by mass
+	-Added filtering intensity
+	-Added normalising intensity
+	-Added finding sequence tags
+	-Added finding longest sequence tags
+	-Added ability to link spectra ids to outputs from other methods, and filter the spectra by id
+		
+-Cleaned up runningScript significantly, to make it easier to test things. Also added stubs for unit testing.
+
+-HEAVY TESTING STILL REQUIRED ON ALL OF THIS
+
+-Added drawSpectra stub.
+
+-Added this changelog file.
+---
+
+-Added complexity analysis and design decisions to informal_docs.
+
+-Added MassSpectrum object for wrapping around ms files.
+	-Added max intensity finder to MassSpectrum.
+	-Added intensity filtering to MassSpectrum.
+	-Added intensity normalisation to MassSpectrum.
+	-Added sequence tag finding algorithm.
+	-Added method to find longest sequence tag.
+	
+-Added runningScript, a file which for now is where I put various tests and calls to run the various project files.
+
+---
+
+Added mass spectrometry file parser.

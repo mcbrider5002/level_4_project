@@ -14,10 +14,12 @@ class MassSpectrum():
 	
 	'''Initialiser
 		All parameters are optional to allow leaving some blank, so be sure you fill everything you need'''
-	def __init__(self, compound="", formula="", parent_mass=0.0, ionization="", inchi="", inchi_key="", smiles="", ms2peaks=np.array([]), mass_table={}, misc={}):
+	def __init__(self, id="", compound="", formula="", parent_mass=0.0, ionization="", inchi="", inchi_key="", smiles="", ms2peaks=np.array([]), mass_table={}, misc={}):
 	
 		#Although Python is dynamically-typed, I'll suggest data types here - I can't guarantee methods will work if performed on the wrong data type
 		
+		#String containing some identifier, probably file name
+		self.id = id
 		#String containing compound name
 		self.compound = compound
 		#String
@@ -46,13 +48,14 @@ class MassSpectrum():
 		Not very elegant and mostly for debugging.
 		I wouldn't use this for anything particularly heavy.'''
 	def __str__(self):
-		base_string = (">compound " + self.compound
-						+ "\n>formula " + self.formula
+		base_string = (str(self.id)
+						+"\n>compound " + str(self.compound)
+						+ "\n>formula " + str(self.formula)
 						+ "\n>parentmass " + str(self.parent_mass)
-						+ "\n>ionization " + self.ionization
-						+ "\n>InChI " + self.inchi
-						+ "\n>InChIKey " + self.inchi_key
-						+ "\n>smiles " + self.smiles
+						+ "\n>ionization " + str(self.ionization)
+						+ "\n>InChI " + str(self.inchi)
+						+ "\n>InChIKey " + str(self.inchi_key)
+						+ "\n>smiles " + str(self.smiles)
 						+ "\n>ms2peaks ")
 						
 		for index in range(len(self.ms2peaks[:, 0])):
@@ -68,36 +71,50 @@ class MassSpectrum():
 			
 		return base_string
 	
+	'''Returns the maximum mass reading in our mass peak readings.'''
+	def max_mass(self):
+		return np.max(self.ms2peaks[:, self.MASS])
+	
 	'''Returns the maximum intensity reading in our mass peak readings.'''
 	def max_intensity(self):
 		return np.max(self.ms2peaks[:, self.INTENSITY])
 	
-	'''Filters mass peak readings so as to remove any low intensity readings.
-		By default the minimum threshold is 5% of the max intensity reading.'''
+	'''Sorts readings in non-decreasing order of mass.'''
+	def sort_by_mass(self):
+		self.ms2peaks = self.ms2peaks[np.argsort(self.ms2peaks[:, MASS], axis=0), :]
+	
+	'''Filters mass peak readings so as to remove any intensity readings less than the number given.
+		By default the minimum threshold is 5% of the max intensity reading, but the function takes a fixed input, not a percentage, so be careful.'''
 	def filter_intensity(self, intensity_threshold=None):
 		intensity_threshold = 0.05*self.max_intensity() if intensity_threshold is None else intensity_threshold #default value
 		self.ms2peaks = self.ms2peaks[self.ms2peaks[:, self.INTENSITY] > intensity_threshold, :]
 	
 	'''Normalises mass intensity readings so the max reading is equal to some value.
 		Default value is 100. Doesn't try to avoid machine precision numerical errors.'''
-	def normalise_intensity(self, intensity_threshold=100):
-		self.ms2peaks[:, self.INTENSITY] = self.ms2peaks[:, self.INTENSITY] * (intensity_threshold / self.max_intensity())
+	def normalise_intensity(self, new_max=100, old_max=None):
+		old_max = self.max_intensity() if old_max is None else old_max
+		self.ms2peaks[:, self.INTENSITY] = self.ms2peaks[:, self.INTENSITY] * (new_max / old_max)
 		
 	'''Calculates an upper and lower bound for a mass tolerance given a mass and a static value to vary by.'''
 	@staticmethod
 	def static_mass_tolerance(mass, mass_tolerance):
 		return (mass - mass_tolerance), (mass + mass_tolerance)
 		
-	'''Calculates an upper and lower bound for a mass tolerance given a mass and a percentage value to vary by.'''
+	'''Calculates an upper and lower bound for a mass tolerance given a mass and a percentage value to vary by, with percentage relative to each mass reading.'''
 	@staticmethod
 	def percentile_mass_tolerance(mass, mass_tolerance):
 		return (mass * (1 - mass_tolerance)), (mass * (1 + mass_tolerance))
+		
+	'''Calculates an uppper and lower bound for a mass tolerance given a mass and a percentage value to vary by, with percentage relative to the largest mass reading.'''
+	def ppm_mass_tolerance(self, mass, mass_tolerance):
+		return mass - (self.max_mass() * mass_tolerance), mass + (self.max_mass() * mass_tolerance)
 		
 	#######################################################
 	#Pass one of these names to anything that accepts a mass tolerance mode with instance.NAME
 	#(This is just a convenience to make this class easier to read - just the function name without the brackets will do, if you want)
 	STATIC_MASS_TOLERANCE = static_mass_tolerance
 	PERCENTILE_MASS_TOLERANCE = percentile_mass_tolerance
+	PPM_MASS_TOLERANCE = ppm_mass_tolerance
 	#######################################################
 	
 	########################	
@@ -109,7 +126,7 @@ class MassSpectrum():
 	def __unpack_tag_paths(tag_paths):
 	
 		to_check = list(range(len(tag_paths))) #List of all tag-beginning points we are yet to check (we ignore any that are visited during the construction of another tag)
-		tags = [] #List of pairs of tags and their corresponding peaks extracted from our data structure
+		tags = {} #List of pairs of tags and their corresponding peaks extracted from our data structure
 		
 		'''Internal function to help us recursively traverse the data structure.
 			The for loop below starts it off with a 'source node' (i.e. a peak with no previous peaks that have a tag to it),
@@ -118,60 +135,57 @@ class MassSpectrum():
 		def recursive_structure_search(current_tag, peaks, tags):
 			pushed = True #true if last operation was a push (not pop) preventing subsequences of tags from being registered as a separate tag
 			
-			for compound in tag_paths[peaks[-1]].keys():
-				for index in tag_paths[peaks[-1]][compound]:
+			for index in tag_paths[peaks[-1]].keys():
+				compounds = tag_paths[peaks[-1]][index]
 				
-					pushed = False #If there are ANY additions to the current tag, the current tag is a subsequence and we ignore it
+				pushed = False #If there are ANY additions to the current tag, the current tag is a subsequence and we ignore it
 					
-					if(index in to_check): #Any tag we visit as part of another tag's path can be ignored as a root/source for a path as it must be a subsequence
-						to_check.remove(index)
-						
-					recursive_structure_search(current_tag + compound, copy.copy(peaks) + [index], tags) #visit the next tag
+				if(index in to_check): #Any tag we visit as part of another tag's path can be ignored as a root/source for a path as it must be a subsequence
+					to_check.remove(index)
+					
+				if(len(compounds) == 1): #if the list of compounds only has one element, just add that element rather than string representation of the list
+					compounds = compounds[0]
+				recursive_structure_search(current_tag + str(compounds) + "-", copy.copy(peaks) + [index], tags) #visit the next tag
 			
 			if(pushed and len(peaks) > 1): #This is a maximum-length tag (i.e. not a subsequence) and isn't zero-length
-				tags += [(current_tag, peaks)] #Save current tag, and the sequence of corresponding peaks
+			
+				if( not ((len(peaks) - 1) in tags.keys()) ): #if tag length isn't present already, initialise
+					tags[len(peaks) - 1] = [] 
+				tags[len(peaks) - 1] += [(current_tag, peaks)] #Save current tag, and the sequence of corresponding peaks
 		
 		index = 0
 		while(index < len(to_check)): 
 		
-			recursive_structure_search("", [to_check[index]], tags)
+			recursive_structure_search("-", [to_check[index]], tags)
 			index += 1 
 			
 		return tags
+	
+	'''ms2peaks contains an array of mass spectrometry readings, with a mass value and an intensity value.
+		We want to find gaps in the masses that correspond to the masses in mass_table (with some tolerance, either percentile or absolute).
+		Then we want to find all sequences of masses where one mass begins on a peak as another ends, with no subsequences - this is a sequence tag. 
+		This function returns a dictionary of pairs of sequence tags and their corresponding peaks, where each key is the length of the sequence tag
+		(which is equal to the number of peaks minus one).
 		
-	'''def __find_sequence_tags_naive_depth_first(self, mass_tolerance_mode=None, mass_threshold=0.05):
+		This problem can be modelled as a DAG (directed acyclic graph), where each vertex is enumerated and vertices can only have edges to vertices with higher numbers,
+		edges have a label (and edges are labelled by a list of compounds they could possibly represent), and these edges are unknown,
+		but discoverable. In this case, vertices are individual mass spectrometry readings, and edges are potential compounds from gaps between mass peaks.
+		This is the reason for any reference to computational graph terminology.
 	
-		mass_tolerance_mode = self.STATIC_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
-	
-		tags = []
+		mass_tolerance_mode allows you to specify one of this function's methods to use to calculate the upper and lower bounds for the mass tolerance
+		for a given compound. (Standard names for passing these are defined with the functions, for readability's sake.) These methods support fixed mass tolerance, 
+		percentile and percentile relative to the largest value in the file. 
+		mass_threshold specifies the value to be used for the mass tolerance. So in the case of a fixed mass tolerance of 0.05 it will give +-0.05 to the value
+		and in the case of percentile it will give +-5%.
 		
-		stack = []
-		mass_differences = []
-		
-		def recursive_tag_search():
-			for compound in mass_table.keys():
-				
-				mass = mass_table[compound]
-				
-				lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
-				
-				for next_peak in range(index, len(ms2peaks[:][self.MASS])):
-					if(ms2peaks[next_peak, self.MASS] > ms2peaks[:
-			
-		
-		for index in range(len(ms2peaks[:, self.MASS])):
+		Returns a dictionary of lists of sequence tags, stored under their length.'''
+	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
-	def __find_sequence_tags_naive_breadth_first():
+		mass_tolerance_mode = self.PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
 	
-	def __find_sequence_tags_depth_first():	'''	
-	
-	'''Sequence tag search method using NumPy arrays and breadth-first search, storing the results of discovering potential compounds between gaps
-		in a provisional data structure and then constructing sequence tags by walking across it.'''
-	def __find_sequence_tags_breadth_first(self, mass_tolerance_mode=None, mass_threshold=0.05):
-	
-		mass_tolerance_mode = self.STATIC_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
-	
-		tag_paths = [{} for item in self.ms2peaks] #our provisional data structure to hold potential next nodes in sequence tags under the candidate compound name
+		tag_paths = [{} for item in self.ms2peaks]  #our provisional data structure where each entry is a dictionary representing a peak,
+													#with keys indices of other (later) peaks and values a list of possible compounds which could be represented
+													#by the mass differences between these peaks
 		
 		for index in range(len(tag_paths)):
 		
@@ -187,64 +201,50 @@ class MassSpectrum():
 				candidate_positions += index + 1
 				
 				if(len(candidate_positions) > 0):
-					tag_paths[index][compound] = candidate_positions
+					for pos in candidate_positions:
+						if( not (pos in tag_paths[index].keys())): #initialise list if it's not already
+							tag_paths[index][pos] = []
+						tag_paths[index][pos] += [compound]
 					
 		return self.__unpack_tag_paths(tag_paths)
 		
-	##############################################################	
-	#Pass one of these names to anything that accepts a  with instance.NAME
-	#(This is just a convenience to make this class easier to read - just the function name without the brackets will do, if you want)
-	BREADTH_FIRST = __find_sequence_tags_breadth_first
-	'''DEPTH_FIRST = __find_sequence_tags_depth_first
-	BREADTH_FIRST_NAIVE = __find_sequence_tags_naive_breadth_first
-	DEPTH_FIRST_NAIVE = __find_sequence_tags_naive_depth_first'''
-	##############################################################
+	'''Convenience method to return the longest tag length and the entire dictionary of tags from find_sequence_tags, and return them as a pair.
+		Use instead of find_sequence_tags if you also need the longest tag length (if you just need longest tag length, you can throw the dictionary away).'''
+	def find_longest_tag(self, mass_tolerance_mode=None, mass_threshold=0.00001):
+		tags = self.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+		return (max(tags.keys()) if len(tags.keys()) > 0 else 0), tags
+		
+	'''A function that expands any instance of multiple tag possibility into several sequence tags with defininite possibilities.
+		So an example tag -A-[A, B, C]-B- will expand into tags -A-A-B-, -A-B-B-, -A-C-B-.
+		This will result in an exponentially large number of tags, so I don't recommend doing it on large tags with lots of uncertainty,
+		as the computation will never finish.
+		
+		Takes the tags in dictionary form and outputs a new dictionary with expanded forms.'''
+	@staticmethod
+	def expand_tag_notation(tags):
+	
+		'''Helper to expand tags.'''
+		def recursive_expansion(new_tag, split_tag, peaks, index, output_list):
+			if(index >= len(split_tag)):
+				output_list += [new_tag, peaks]
+				return
+		
+			for element in split_tag[index]:
+				recursive_expansion(new_tag + element, split_tag, peaks, index+1, output_list)
+			
+			
+		tags = copy.deepcopy(tags)
+		for length in tags.keys():
+			new_tags = []
+			for tag in tags[length]:
+				split_tag = tag[0].split('-')
+				spilt_tag = [(list(char) if char[0] == '[' else [char]) for char in split_tag] #convert tags to lists
+				recursive_expansion("", split_tag, tag[1], 0, new_tags)
+			tags[length] = new_tags
 				
-	'''ms2peaks contains an array of mass spectrometry readings, with a mass value and an intensity value.
-		We want to find gaps in the masses that correspond to the masses in mass_table (with some tolerance, either percentile or absolute).
-		Then we want to find all sequences of masses where one mass begins on a peak as another ends, with no subsequences - this is a sequence tag. 
-		This function returns a list of pairs of all sequence tags and the corresponding peaks in between whose gaps one finds the constitutents of the sequence tag.
-		
-		This problem can be modelled as a DAG (directed acyclic graph), where each vertex is enumerated and vertices can only have edges to vertices with higher numbers,
-		edges have a label (and a given vertex may have several edges with different labels to another, although this is unlikely in practise), and these edges are unknown,
-		but discoverable. In this case, vertices are individual mass spectrometry readings, and edges are potential compounds from gaps between mass peaks.
-		This is the reason for any reference to computational graph terminology.
-		
-		So-called 'breadth-first' search methods in this scheme differ not only by being breadth-first searches, but they also perform the computation in two phases,
-		discovering the graph's edges (i.e. any potential candidate compounds between peaks), storing the complete graph in a list of dictionaries,
-		then traversing it to extract all sequence tags. So-called 'depth-first' algorithms are indeed 'depth-first', but do the calculation all in one stage,
-		potentially needing to recompute mass-differences but avoiding the need to traverse the data structure.
-	
-		mass_tolerance_mode allows you to specify one of this function's static methods to use to calculate the upper and lower bounds for the mass tolerance
-		for a given compound. (Standard names for passing these are defined with the functions, for readability's sake.) These methods support both fixed mass tolerance and 
-		percentile. mass_threshold specifies the value to be used for the mass tolerance. So in the case of a fixed mass tolerance of 0.05 it will give +-0.05 to the value
-		and in the case of percentile it will give +-5%.
-	
-		This method is actually just an interface around the variant sequence tag methods to reduce the complexity of this class from the outside.
-		Rather than having various different methods to be called, this method wraps around them and chooses a method to call with the search_mode
-		argument, which is by default breadth-first non-naive search. (Standard names are defined just above this time.)'''
-	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.05, search_mode=None):
-		mass_tolerance_mode = self.STATIC_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default values
-		search_mode = self.BREADTH_FIRST if search_mode is None else search_mode
-		return search_mode(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
-		
-	'''Finds the longest tag present using the find_sequence_tags method.
-		Just wraps around it and then traverses its output with a for loop.'''
-	def find_longest_tag(self, mass_tolerance_mode=None, mass_threshold=0.05, search_mode=None):
-	
-		mass_tolerance_mode = self.STATIC_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default values
-		search_mode = self.BREADTH_FIRST if search_mode is None else search_mode
-		
-		tags = self.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold, search_mode=search_mode)
-		
-		longest_tag_length = 0 #stores the length of the current longest tag
-		longest_tag = "" #stores the readout of compounds in current longest tag
-		
-		for tag in tags:
-			tag_rep, peaks = tag
-			if(len(peaks) - 1 > longest_tag_length):
-				longest_tag_length = len(peaks) - 1
-				longest_tag = tag_rep
-				
-		return (longest_tag, longest_tag_length)
-		
+		return tags
+
+	'''Convenience method to flatten the dictionary form of the tags (where they are stored by length) into a single list (in no guaranteed order).'''
+	@staticmethod
+	def flatten_tags(tag_dict):
+		return [element for element in tag_dict[keys] for key in tag_dict]
