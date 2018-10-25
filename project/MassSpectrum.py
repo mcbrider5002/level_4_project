@@ -1,5 +1,8 @@
 import numpy as np
 import copy
+from decimal import Decimal
+import itertools
+from collections import defaultdict
 
 '''A wrapper class for mass-spectrometry files.'''
 class MassSpectrum():
@@ -81,7 +84,7 @@ class MassSpectrum():
 	
 	'''Sorts readings in non-decreasing order of mass.'''
 	def sort_by_mass(self):
-		self.ms2peaks = self.ms2peaks[np.argsort(self.ms2peaks[:, MASS], axis=0), :]
+		self.ms2peaks = self.ms2peaks[np.argsort(self.ms2peaks[:, self.MASS], axis=0), :]
 	
 	'''Filters mass peak readings so as to remove any intensity readings less than the number given.
 		By default the minimum threshold is 5% of the max intensity reading, but the function takes a fixed input, not a percentage, so be careful.'''
@@ -90,10 +93,13 @@ class MassSpectrum():
 		self.ms2peaks = self.ms2peaks[self.ms2peaks[:, self.INTENSITY] > intensity_threshold, :]
 	
 	'''Normalises mass intensity readings so the max reading is equal to some value.
-		Default value is 100. Doesn't try to avoid machine precision numerical errors.'''
+		Default value is 100. Casts to Decimal to try to avoid machine precision numerical errors, then back to float, so this may slow it down a little..'''
 	def normalise_intensity(self, new_max=100, old_max=None):
+	
 		old_max = self.max_intensity() if old_max is None else old_max
-		self.ms2peaks[:, self.INTENSITY] = self.ms2peaks[:, self.INTENSITY] * (new_max / old_max)
+		new_intensities = np.array([Decimal(peak) for peak in list(self.ms2peaks[:, self.INTENSITY])]) #cast to decimal
+		new_intensities *= ((Decimal(new_max) / Decimal(old_max))) #normalise
+		self.ms2peaks[:, self.INTENSITY] = np.array(new_intensities, dtype=float) #cast back, return
 		
 	'''Calculates an upper and lower bound for a mass tolerance given a mass and a static value to vary by.'''
 	@staticmethod
@@ -178,14 +184,14 @@ class MassSpectrum():
 		mass_threshold specifies the value to be used for the mass tolerance. So in the case of a fixed mass tolerance of 0.05 it will give +-0.05 to the value
 		and in the case of percentile it will give +-5%.
 		
-		Returns a dictionary of lists of sequence tags, stored under their length.'''
+		Returns a dictionary of lists of sequence tags (with no subsequences because those can be reconstructed from longer tags), stored under their length.'''
 	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
 		mass_tolerance_mode = self.PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
 	
-		tag_paths = [{} for item in self.ms2peaks]  #our provisional data structure where each entry is a dictionary representing a peak,
-													#with keys indices of other (later) peaks and values a list of possible compounds which could be represented
-													#by the mass differences between these peaks
+		tag_paths = [defaultdict(list) for item in self.ms2peaks]  #our provisional data structure where each entry is a dictionary representing a peak,
+																	#with keys indices of other (later) peaks and values a list of possible compounds which could be represented
+																	#by the mass differences between these peaks
 		
 		for index in range(len(tag_paths)):
 		
@@ -193,18 +199,13 @@ class MassSpectrum():
 			mass_differences = np.array(self.ms2peaks)[(index+1):, self.MASS] - np.array(self.ms2peaks)[index, self.MASS] 
 		
 			#for each compound check if any mass differences are approximately equal to the mass of a compound in the mass table and add it to tag_paths if so
-			for compound in self.mass_table.keys():
+			for compound, mass in self.mass_table.items():
 			
-				mass = self.mass_table[compound]
 				lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
-				candidate_positions, = (np.logical_and(mass_differences <= upper_threshold, mass_differences >= lower_threshold)).nonzero()
-				candidate_positions += index + 1
+				candidate_positions, = (np.logical_and(mass_differences <= upper_threshold, mass_differences >= lower_threshold)).nonzero() #get indices where element between threshold 
+				candidate_positions += index + 1 #adjust for the offset in only checking part of the array (since peaks are directional)
 				
-				if(len(candidate_positions) > 0):
-					for pos in candidate_positions:
-						if( not (pos in tag_paths[index].keys())): #initialise list if it's not already
-							tag_paths[index][pos] = []
-						tag_paths[index][pos] += [compound]
+				for next_pos in candidate_positions: tag_paths[index][next_pos] += [compound] #add to provisional data structure
 					
 		return self.__unpack_tag_paths(tag_paths)
 		
@@ -241,10 +242,10 @@ class MassSpectrum():
 				spilt_tag = [(list(char) if char[0] == '[' else [char]) for char in split_tag] #convert tags to lists
 				recursive_expansion("", split_tag, tag[1], 0, new_tags)
 			tags[length] = new_tags
-				
+			
 		return tags
 
 	'''Convenience method to flatten the dictionary form of the tags (where they are stored by length) into a single list (in no guaranteed order).'''
 	@staticmethod
 	def flatten_tags(tag_dict):
-		return [element for element in tag_dict[keys] for key in tag_dict]
+		return [element for element in (tag_dict[key] for key in tag_dict.keys())]

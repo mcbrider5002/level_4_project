@@ -1,3 +1,17 @@
+Tests written for most methods in mass spectra classes (in runningScript for now). Still require a bit of cleaning up.
+	-Max mass
+	-Max intensity
+	-Sort by mass
+	-Filter intensity
+	-Normalise intensity
+	-Mass tolerance calculations
+	-Find longest tag
+	-Flatten tags
+
+normalise_intensity method changed to avoid machine precision error by using Decimal.
+
+---
+
 -Significant reworking of complexity analysis and design decisions in informal_docs in progress, previously only considered some rather limited assumptions.
 
 -MassSpectrum
