@@ -10,10 +10,9 @@ import random
 import string
 
 import itertools
-
 from collections import defaultdict
 
-import ast
+import csv
 
 ##########
 ###Data###
@@ -81,7 +80,7 @@ def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.m
 	
 	print("Filtering intensity...")
 	start = time.clock()
-	intensity_thresholds = [intensity*0.05 for intensity in spectra.max_intensity_local()] if intensity_thresholds is None else intensity_thresholds
+	intensity_thresholds = [intensity*0.05 for intensity in spectra.max_intensity_local()] if intensity_thresholds is None else [intensity*intensity_thresholds for intensity in spectra.max_intensity_local()]
 	intensity_thresholds = [intensity*intensity_thresholds for intensity in spectra.max_intensity_local()] if isinstance(intensity_thresholds, float) else intensity_thresholds
 	spectra.filter_intensity_local(intensity_thresholds=intensity_thresholds)
 	print("Time taken: " + str(time.clock() - start))
@@ -95,6 +94,8 @@ def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.m
 	start = time.clock()
 	longest_tag, tags = spectra.find_longest_tag_global(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
 	print("Time taken: " + str(time.clock() - start))
+	
+	print("Longest tag found: " + str(longest_tag) + "\n")
 	
 	return longest_tag, spectra.attach_spectra_ids(tags)
 	
@@ -116,7 +117,8 @@ def print_longest_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*
 def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
 						intensity_thresholds=None,
 						mass_tolerance_mode=None, mass_threshold=0.00001,
-						lengths_to_print=None, output_path=os.getcwd()):
+						lengths_to_print=None, output_path=os.path.join(os.getcwd(), "out"),
+						filename="tags.out"):
 						
 	longest_tag, spectra_tags = find_longest_tag(path=path, pattern=pattern, intensity_thresholds=intensity_thresholds, 
 											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
@@ -126,7 +128,7 @@ def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms",
 	lengths_to_print = list(filter(lambda length : length <= longest_tag and length > 0, lengths_to_print)) #remove impossible indices
 	
 	os.chdir(output_path)
-	file = open("tags.out", 'w')
+	file = open(filename, 'w')
 	for spectrum in spectra_tags: #print the id of each spectrum, the current tag length, and all tags with that length
 	
 		for length in lengths_to_print:
@@ -139,6 +141,42 @@ def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms",
 					file.write(str(tag) + "\n")
 		
 	file.close()
+
+'''Helper to take the mibig file and automatically write the contents of corresponding files to tags.out.'''	
+def mibig_parser():
+
+	file = open("mibig_gnps_links_q3.csv", 'r')
+	filenames = [line.split(',')[1] + ".ms" for line in file]
+	file.close()
+	
+	mass_tolerance_modes = [MassSpectrum.STATIC_MASS_TOLERANCE, MassSpectrum.STATIC_MASS_TOLERANCE, MassSpectrum.PPM_MASS_TOLERANCE] * 2
+	mass_thresholds = [0.01, 0.001, 0.00001] *2
+	intensity_thresholds = [0.05, 0.005] *3
+	outs = ["mibig_hMass_hInten", "mibi_lMass_lInten", "mibig_ppmMass_hInten", "mibig_hMass_lInten", "mibig_lMass_hInten"]
+	zipped = zip(mass_tolerance_modes, mass_thresholds, intensity_thresholds, outs)
+	
+	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
+		
+		#(longest_tag, (id, (local_longest, {length: [tag, peaks]})))
+		dataset = [find_longest_tag(pattern=filename, intensity_thresholds=intensity_threshold, 
+											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+												for filename in filenames]
+			
+		dataset = [spectra_data for longest_tag, spectra_data in dataset if spectra_data != []]
+		
+		os.chdir(os.path.join(os.getcwd(), os.path.join("..", "out")))
+		file = open(out + ".out", 'w')
+		if(len(dataset) > 0):
+			for pattern_results in dataset:
+				for id, (local_longest, tags) in pattern_results: #print the id of each spectrum, the current tag length, and all tags with that length
+					for length in range(local_longest):
+						if(length in tags.keys()):
+							file.write("---" + str(id) + " " + str(length) + "---\n")
+							for tag in tags[length]:	
+								file.write(str(tag) + "\n")
+		
+		file.close()
+	
 	
 ###########
 ###Tests###
@@ -481,6 +519,8 @@ def main():
 	
 	tests()
 	
+	mibig_parser()
+	
 	#SecArgGlnPheArgIle
 	#...223959.ms
 	#prev settings: 
@@ -491,15 +531,31 @@ def main():
 	'''print_longest_tags(path=path, pattern="*.ms", 
 						intensity_thresholds=None)'''
 						
-	'''write_tags(path=path, pattern="*.ms", 
+	write_tags(path=path, pattern="*.ms", 
 						intensity_thresholds=0.005,
 						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.001,
-						lengths_to_print=range(4,100))'''
+						lengths_to_print=range(4,100), filename="tags_0.001Mass_0.005Int.out")
 						
+	write_tags(path=path, pattern="*.ms", 
+						intensity_thresholds=0.05,
+						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.01,
+						lengths_to_print=range(4,100), filename="tags_0.01Mass_0.05Int.out")
+						
+	write_tags(path=path, pattern="*.ms", 
+						intensity_thresholds=0.05,
+						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.001,
+						lengths_to_print=range(4,100), filename="tags_0.001Mass_0.05Int.out")
+						
+	#Too long
 	'''write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=None,
+						intensity_thresholds=0.005,
+						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.01,
+						lengths_to_print=range(4,100), filename="tags_0.01Mass_0.005Int.out")'''
+						
+	write_tags(path=path, pattern="*.ms", 
+						intensity_thresholds=0.05,
 						mass_threshold = 0.00001,
-						lengths_to_print=range(4,100))'''
+						lengths_to_print=range(4,100), filename="tags_10ppmMass_0.05Int.out")
 	
 	'''print("Parsing, converting to object...")
 	mibig_spectrum_1 = setup_mass_spectra(parser.load_files_from_dir(path=path, pattern="CCMSLIB00000223959.ms")[0])

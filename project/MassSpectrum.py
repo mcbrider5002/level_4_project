@@ -201,7 +201,10 @@ class MassSpectrum():
 			#for each compound check if any mass differences are approximately equal to the mass of a compound in the mass table and add it to tag_paths if so
 			for compound, mass in self.mass_table.items():
 			
-				lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
+				if(mass_tolerance_mode == MassSpectrum.ppm_mass_tolerance):
+					lower_threshold, upper_threshold = self.ppm_mass_tolerance(mass, mass_threshold)
+				else:
+					lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
 				candidate_positions, = (np.logical_and(mass_differences <= upper_threshold, mass_differences >= lower_threshold)).nonzero() #get indices where element between threshold 
 				candidate_positions += index + 1 #adjust for the offset in only checking part of the array (since peaks are directional)
 				
