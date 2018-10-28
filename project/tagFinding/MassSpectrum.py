@@ -128,8 +128,7 @@ class MassSpectrum():
 	########################
 		
 	'''A helper method to unpack our provisional data structure when we perform breadth-first search and store all the connections between peaks in it.'''
-	@staticmethod
-	def __unpack_tag_paths(tag_paths):
+	def __unpack_tag_paths(self, tag_paths):
 	
 		to_check = list(range(len(tag_paths))) #List of all tag-beginning points we are yet to check (we ignore any that are visited during the construction of another tag)
 		tags = {} #List of pairs of tags and their corresponding peaks extracted from our data structure
@@ -157,7 +156,7 @@ class MassSpectrum():
 			
 				if( not ((len(peaks) - 1) in tags.keys()) ): #if tag length isn't present already, initialise
 					tags[len(peaks) - 1] = [] 
-				tags[len(peaks) - 1] += [(current_tag, peaks)] #Save current tag, and the sequence of corresponding peaks
+				tags[len(peaks) - 1] += [(current_tag, list(self.ms2peaks[peaks, MassSpectrum.MASS]))] #Save current tag, and the sequence of corresponding peaks
 		
 		index = 0
 		while(index < len(to_check)): 
@@ -205,8 +204,9 @@ class MassSpectrum():
 					lower_threshold, upper_threshold = self.ppm_mass_tolerance(mass, mass_threshold)
 				else:
 					lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
+					
 				candidate_positions, = (np.logical_and(mass_differences <= upper_threshold, mass_differences >= lower_threshold)).nonzero() #get indices where element between threshold 
-				candidate_positions += index + 1 #adjust for the offset in only checking part of the array (since peaks are directional)
+				candidate_positions += index + 1 #adjust for the offset in only checking part of the array (since peaks are directional we only check succeeding ones)
 				
 				for next_pos in candidate_positions: tag_paths[index][next_pos] += [compound] #add to provisional data structure
 					

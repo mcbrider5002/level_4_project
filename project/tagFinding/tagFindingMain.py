@@ -519,7 +519,7 @@ def main():
 	
 	tests()
 	
-	mibig_parser()
+	#mibig_parser()
 	
 	#SecArgGlnPheArgIle
 	#...223959.ms
