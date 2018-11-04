@@ -1,4 +1,4 @@
 import matplotlib
 
-def drawSpectrum(tag):
-	pass
+def drawSpectrum(tag, dict, spectrum):
+	

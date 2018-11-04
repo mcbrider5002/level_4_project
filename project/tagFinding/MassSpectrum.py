@@ -47,6 +47,10 @@ class MassSpectrum():
 		#I recommend you extend the class itself instead
 		self.misc = misc
 		
+		#An empty data-structure that is populated as we change the order of readings in mass-peaks
+		#It allows the new indices to be mapped back to their original positions in the data
+		mapping = []
+		
 	'''Returns string representation of object.
 		Not very elegant and mostly for debugging.
 		I wouldn't use this for anything particularly heavy.'''
@@ -73,6 +77,13 @@ class MassSpectrum():
 			base_string += "\n>" + str(key) + "\n" + str(self.misc[key])
 			
 		return base_string
+		
+	'''Returns the current transformed indices to the original indices, using the mappings in mapping.'''
+	@staticmethod
+	def original_indices():
+		keys = [key for key in self.mappings[0].keys()]
+		for mapping in mappings:
+			keys = [mapping[key] for key in keys]
 	
 	'''Returns the maximum mass reading in our mass peak readings.'''
 	def max_mass(self):
