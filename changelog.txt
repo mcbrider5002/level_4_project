@@ -1,3 +1,7 @@
+Tests moves to tests.py
+
+---
+
 Tests written for most methods in mass spectra classes (in runningScript for now). Still require a bit of cleaning up.
 	-Max mass
 	-Max intensity
