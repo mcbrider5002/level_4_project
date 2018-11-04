@@ -37,7 +37,7 @@ AA_mass_table = {
 ###Convenience Functions###
 ###########################
 
-def setup_mass_spectra(file):
+def setup_mass_spectra(file, mass_table=AA_mass_table):
 	
 	filename, dict = file
 	
@@ -50,7 +50,7 @@ def setup_mass_spectra(file):
 						inchi_key=dict["InChIKey"], 
 						smiles=dict["smiles"], 
 						ms2peaks=dict["ms2peaks"], 
-						mass_table=AA_mass_table)
+						mass_table=mass_table)
 						
 '''Convenience function to perform the multiple steps necessary to find tags and their ids.'''
 def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
