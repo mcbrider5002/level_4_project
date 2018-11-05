@@ -1,3 +1,6 @@
+from Tag import Tag
+from SpectrumTags import SpectrumTags
+
 '''A wrapper class to make multiple operations on MassSpectra easier and with the use of less boilerplate.
 	It is NOT a guarantee of more efficiency, it's just a convenience.
 	Functions have both local and global variants, where 'local' performs the operation on each file individually whereas 'global' applies it to all
@@ -74,24 +77,16 @@ class MassSpectraAggregate():
 		for spectrum in self.spectra:
 			spectrum.normalise_intensity(new_max=new_max, old_max=old_max)
 		
-	'''Returns a list of the dictionaries of sequence tags stored by length for each spectrum.
+	'''Returns a list of SpectrumTags, containing the sequence tags for each spectrum.
 		Defers mass_tolerance_mode default to the spectrum class, but the default value for the mass threshold is defined here as (10^(-5))
 		(10ppm with ppm mode).'''
 	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
-		return [spectrum.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold) for spectrum in spectra]
+		return [spectrum.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold) for spectrum in self.spectra]
 		
-	'''Returns a list of the pairs of dictionaries of sequence tags stored by length for each spectrum, and their maximum length tag,
-		stored (length, tags).
+	'''Returns a pair of the longest sequence tag across all spectra, and a list of SpectrumTags.
 		Defers mass_tolerance_mode default to the spectrum class, but the default value for the mass threshold is defined here as (10^(-5))
 		(10ppm with ppm mode).'''
-	def find_longest_tag_local(self, mass_tolerance_mode=None, mass_threshold=0.00001):
-		return [spectrum.find_longest_tag(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold) for spectrum in self.spectra]
-		
-	'''Returns a pair of the longest sequence tag across all spectra, and a list of pairs of the dictionaries of sequence tags stored by length for each spectrum, 
-		along with their maximum length tag, stored (length, tags).
-		Defers mass_tolerance_mode default to the spectrum class, but the default value for the mass threshold is defined here as (10^(-5))
-		(10ppm with ppm mode).'''
-	def find_longest_tag_global(self, mass_tolerance_mode=None, mass_threshold=0.00001):
-		tags = self.find_longest_tag_local(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
-		return (max([tag[0] for tag in tags]) if len(tags)>0 else 0), tags
+	def find_longest_tag(self, mass_tolerance_mode=None, mass_threshold=0.00001):
+		spectra_tags = self.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+		return (max([spectrum_tags.longest_tag for spectrum_tags in spectra_tags]) if len(spectra_tags)>0 else 0), spectra_tags
 		
