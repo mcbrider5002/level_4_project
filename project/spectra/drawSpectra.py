@@ -61,8 +61,11 @@ def main():
 	spectrum.filter_intensity()
 	spectrum.sort_by_mass()
 	spectrum_tags = spectrum.find_sequence_tags()
-	tag = spectrum_tags.tags[spectrum_tags.longest_tag][0]
-	drawSpectrum(spectrum, tag)
+	tags = spectrum_tags.tags[spectrum_tags.longest_tag]
+	if(len(tags) > 0):
+		drawSpectrum(spectrum, tags[0]) #take the first tag of the longest length
+	else:
+		print("No tags found in this spectrum!")
 	
 if __name__ == "__main__":
 
