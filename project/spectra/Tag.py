@@ -12,7 +12,7 @@ class Tag():
 		self.length = len(peaks) - 1
 		
 	def __str__(self):
-		return self.tag + " " + str(self.masses)
+		return self.tag + " " + str(self.peaks) + " " + str(self.masses)
 		
 	'''A function that expands any instance of multiple tag possibility into several sequence tags with defininite possibilities.
 		So an example tag -A-[A, B, C]-B- will expand into tags -A-A-B-, -A-B-B-, -A-C-B-.

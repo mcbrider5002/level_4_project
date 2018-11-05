@@ -49,7 +49,7 @@ class MassSpectrum():
 		
 		#An empty data-structure that is populated as we change the order of readings in mass-peaks
 		#It allows the new indices to be mapped back to their original positions in the data
-		mapping = []
+		self.mappings = []
 		
 	'''Returns string representation of object.
 		Not very elegant and mostly for debugging.
@@ -78,13 +78,17 @@ class MassSpectrum():
 			
 		return base_string
 		
-	'''Returns the current transformed indices to the original indices, using the mappings in mapping.'''
-	@staticmethod
-	def original_indices():
-		keys = [key for key in self.mappings[0].keys()]
-		for mapping in mappings:
-			keys = [mapping[key] for key in keys]
+	'''When indices in ms2peaks are changed, add a mapping to translate them back to the indices in the original layout.
+		Takes what the changed indices would be in the original enumeration and adds a mapping based on this.'''
+	def update_mappings(self, old_indices):
+		self.mappings = [{new_index:old_index for new_index, old_index in enumerate(old_indices)}] + self.mappings
 	
+	'''Returns the current transformed indices to the original indices, using the mappings in mapping.'''
+	def original_indices(self, indices):
+		for mapping in self.mappings:
+			indices = [mapping[index] for index in indices]
+		return indices
+			
 	'''Returns the maximum mass reading in our mass peak readings.'''
 	def max_mass(self):
 		return np.max(self.ms2peaks[:, self.MASS])
@@ -95,13 +99,23 @@ class MassSpectrum():
 	
 	'''Sorts readings in non-decreasing order of mass.'''
 	def sort_by_mass(self):
-		self.ms2peaks = self.ms2peaks[np.argsort(self.ms2peaks[:, self.MASS], axis=0), :]
+	
+		sorted_indices = np.argsort(self.ms2peaks[:, self.MASS], axis=0)
+		self.update_mappings(sorted_indices)
+		self.ms2peaks = self.ms2peaks[sorted_indices, :]
 	
 	'''Filters mass peak readings so as to remove any intensity readings less than the number given.
 		By default the minimum threshold is 5% of the max intensity reading, but the function takes a fixed input, not a percentage, so be careful.'''
 	def filter_intensity(self, intensity_threshold=None):
+	
 		intensity_threshold = 0.05*self.max_intensity() if intensity_threshold is None else intensity_threshold #default value
-		self.ms2peaks = self.ms2peaks[self.ms2peaks[:, self.INTENSITY] > intensity_threshold, :]
+		above_threshold, = (self.ms2peaks[:, self.INTENSITY] > intensity_threshold).nonzero()
+		self.update_mappings(above_threshold)
+		'''print(above_threshold)
+		print(above_threshold.nonzero())
+		print(self.mappings)
+		print()'''
+		self.ms2peaks = self.ms2peaks[above_threshold, :]
 	
 	'''Normalises mass intensity readings so the max reading is equal to some value.
 		Default value is 100. Casts to Decimal to try to avoid machine precision numerical errors, then back to float, so this may slow it down a little..'''
@@ -161,11 +175,11 @@ class MassSpectrum():
 					
 				if(len(compounds) == 1): #if the list of compounds only has one element, just add that element rather than string representation of the list
 					compounds = compounds[0]
-				recursive_structure_search(current_tag + str(compounds) + "-", copy.copy(peaks) + [index], tags) #visit the next tag
+				recursive_structure_search(current_tag + str(compounds) + "-", (copy.copy(peaks)) + [index], tags) #visit the next tag
 			
 			if(pushed and len(peaks) > 1): #This is a maximum-length tag (i.e. not a subsequence) and isn't zero-length
 				masses = list(self.ms2peaks[peaks, MassSpectrum.MASS])
-				(tags[len(peaks) - 1]).append(Tag(current_tag, peaks, masses)) #Save current tag, and the sequence of corresponding peaks
+				(tags[len(peaks) - 1]).append(Tag(current_tag, self.original_indices(peaks), masses)) #Save current tag, and the sequence of corresponding peaks
 	
 	
 		index = 0

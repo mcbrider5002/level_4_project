@@ -1,3 +1,8 @@
+Orderings of readings in MassSpectrum can now be mapped back to their original indices.
+	This is done automatically when adding indices to a tag in find_sequence_tags.
+
+---
+
 Tests moves to tests.py
 
 Fix to flatten and test for flatten.
