@@ -1,5 +1,12 @@
 Tests moves to tests.py
 
+Fix to flatten and test for flatten.
+
+Created Tag and SpectrumTags object wrappers to make data structures less convoluted and prevent structures like (int, [(str, (int, {int:[(str, [int])]}))]) - a real example!
+	This has had the side-effect of moving flatten and expand_tag_notation (still untested) to be methods in these new classes.
+	Also, some methods like MassSpectrum.find_longest_tag and MassSpectraAggregate.find_longest_tag_local are now redundant, so have been removed.
+	Consequently, MassSpectraAggregate.find_longest_tag_local has been renamed to find_longest_tag.
+
 ---
 
 Tests written for most methods in mass spectra classes (in runningScript for now). Still require a bit of cleaning up.

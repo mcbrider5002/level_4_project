@@ -1,8 +1,10 @@
 import numpy as np
 import copy
 from decimal import Decimal
-import itertools
 from collections import defaultdict
+
+from Tag import Tag
+from SpectrumTags import SpectrumTags
 
 '''A wrapper class for mass-spectrometry files.'''
 class MassSpectrum():
@@ -19,8 +21,6 @@ class MassSpectrum():
 		All parameters are optional to allow leaving some blank, so be sure you fill everything you need'''
 	def __init__(self, id="", compound="", formula="", parent_mass=0.0, ionization="", inchi="", inchi_key="", smiles="", ms2peaks=np.array([]), mass_table={}, misc={}):
 	
-		#Although Python is dynamically-typed, I'll suggest data types here - I can't guarantee methods will work if performed on the wrong data type
-		
 		#String containing some identifier, probably file name
 		self.id = id
 		#String containing compound name
@@ -131,7 +131,7 @@ class MassSpectrum():
 	def __unpack_tag_paths(self, tag_paths):
 	
 		to_check = list(range(len(tag_paths))) #List of all tag-beginning points we are yet to check (we ignore any that are visited during the construction of another tag)
-		tags = {} #List of pairs of tags and their corresponding peaks extracted from our data structure
+		tags = defaultdict(list) #List of pairs of tags and their corresponding peaks extracted from our data structure
 		
 		'''Internal function to help us recursively traverse the data structure.
 			The for loop below starts it off with a 'source node' (i.e. a peak with no previous peaks that have a tag to it),
@@ -153,18 +153,19 @@ class MassSpectrum():
 				recursive_structure_search(current_tag + str(compounds) + "-", copy.copy(peaks) + [index], tags) #visit the next tag
 			
 			if(pushed and len(peaks) > 1): #This is a maximum-length tag (i.e. not a subsequence) and isn't zero-length
-			
-				if( not ((len(peaks) - 1) in tags.keys()) ): #if tag length isn't present already, initialise
-					tags[len(peaks) - 1] = [] 
-				tags[len(peaks) - 1] += [(current_tag, list(self.ms2peaks[peaks, MassSpectrum.MASS]))] #Save current tag, and the sequence of corresponding peaks
-		
+				masses = list(self.ms2peaks[peaks, MassSpectrum.MASS])
+				(tags[len(peaks) - 1]).append(Tag(current_tag, peaks, masses)) #Save current tag, and the sequence of corresponding peaks
+	
+	
 		index = 0
 		while(index < len(to_check)): 
 		
 			recursive_structure_search("-", [to_check[index]], tags)
 			index += 1 
 			
-		return tags
+		longest_tag = (max(tags.keys()) if len(tags.keys()) > 0 else 0)
+			
+		return SpectrumTags(self.id, longest_tag, tags)
 	
 	'''ms2peaks contains an array of mass spectrometry readings, with a mass value and an intensity value.
 		We want to find gaps in the masses that correspond to the masses in mass_table (with some tolerance, either percentile or absolute).
@@ -211,44 +212,3 @@ class MassSpectrum():
 				for next_pos in candidate_positions: tag_paths[index][next_pos] += [compound] #add to provisional data structure
 					
 		return self.__unpack_tag_paths(tag_paths)
-		
-	'''Convenience method to return the longest tag length and the entire dictionary of tags from find_sequence_tags, and return them as a pair.
-		Use instead of find_sequence_tags if you also need the longest tag length (if you just need longest tag length, you can throw the dictionary away).'''
-	def find_longest_tag(self, mass_tolerance_mode=None, mass_threshold=0.00001):
-		tags = self.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
-		return (max(tags.keys()) if len(tags.keys()) > 0 else 0), tags
-		
-	'''A function that expands any instance of multiple tag possibility into several sequence tags with defininite possibilities.
-		So an example tag -A-[A, B, C]-B- will expand into tags -A-A-B-, -A-B-B-, -A-C-B-.
-		This will result in an exponentially large number of tags, so I don't recommend doing it on large tags with lots of uncertainty,
-		as the computation will never finish.
-		
-		Takes the tags in dictionary form and outputs a new dictionary with expanded forms.'''
-	@staticmethod
-	def expand_tag_notation(tags):
-	
-		'''Helper to expand tags.'''
-		def recursive_expansion(new_tag, split_tag, peaks, index, output_list):
-			if(index >= len(split_tag)):
-				output_list += [new_tag, peaks]
-				return
-		
-			for element in split_tag[index]:
-				recursive_expansion(new_tag + element, split_tag, peaks, index+1, output_list)
-			
-			
-		tags = copy.deepcopy(tags)
-		for length in tags.keys():
-			new_tags = []
-			for tag in tags[length]:
-				split_tag = tag[0].split('-')
-				spilt_tag = [(list(char) if char[0] == '[' else [char]) for char in split_tag] #convert tags to lists
-				recursive_expansion("", split_tag, tag[1], 0, new_tags)
-			tags[length] = new_tags
-			
-		return tags
-
-	'''Convenience method to flatten the dictionary form of the tags (where they are stored by length) into a single list (in no guaranteed order).'''
-	@staticmethod
-	def flatten_tags(tag_dict):
-		return [element for element in (tag_dict[key] for key in tag_dict.keys())]

@@ -1,9 +1,12 @@
 import os
 import numpy as np
+import itertools
 
 import massSpectraParser as parser
 from MassSpectrum import MassSpectrum
 from MassSpectraAggregate import MassSpectraAggregate
+from Tag import Tag
+from SpectrumTags import SpectrumTags
 from tests import tests as tests
 
 ##########
@@ -84,12 +87,12 @@ def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.m
 	
 	print("Finding longest tag...")
 	start = time.clock()
-	longest_tag, tags = spectra.find_longest_tag_global(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+	longest_tag, tags = spectra.find_longest_tag(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
 	print("Time taken: " + str(time.clock() - start))
 	
 	print("Longest tag found: " + str(longest_tag) + "\n")
 	
-	return longest_tag, spectra.attach_spectra_ids(tags)
+	return longest_tag, tags
 	
 '''Prints out all the tied-longest tags and their spectrum id.'''
 def print_longest_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
@@ -98,11 +101,11 @@ def print_longest_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*
 						
 	longest_tag, spectra_tags = find_longest_tag(path=path, pattern=pattern, intensity_thresholds=intensity_thresholds, 
 											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
-											
-	spectra_tags = filter(lambda spectrum_tags : spectrum_tags[1][0] == longest_tag, spectra_tags) #first get all spectra with the maximum tag lengths
-	for spectrum in spectra_tags: #print the id of each spectrum, its longest tag length, and all tags with the longest tag length (which should be identical to local longest)
-		print(spectrum[0], spectrum[1][0])
-		for tag in spectrum[1][1][longest_tag]:	
+				
+	spectra_tags = filter((lambda spectrum_tags : spectrum_tags.longest_tag == longest_tag), spectra_tags) #first get all spectra with the maximum tag lengths
+	for spectrum_tags in spectra_tags: #print the id of each spectrum, its longest tag length, and all tags with the longest tag length (which should be identical to local longest)
+		print(spectrum_tags.id, spectrum_tags.longest_tag)
+		for tag in spectrum_tags.tags[longest_tag]:	
 			print(tag)
 	
 '''Writes to "tags.out" on the specifed path all tags with the specified length and their spectrum id.'''	
@@ -121,15 +124,15 @@ def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms",
 	
 	os.chdir(output_path)
 	file = open(filename, 'w')
-	for spectrum in spectra_tags: #print the id of each spectrum, the current tag length, and all tags with that length
+	for spectrum_tags in spectra_tags: #print the id of each spectrum, the current tag length, and all tags with that length
 	
 		for length in lengths_to_print:
 		
-			if(length in spectrum[1][1].keys()):
+			if(length in spectrum_tags.tags.keys()):
 			
-				file.write(str("---" + spectrum[0]) + " " + str(length) + "---\n")
+				file.write(str("---" + spectrum_tags.id) + " " + str(length) + "---\n")
 				
-				for tag in spectrum[1][1][length]:	
+				for tag in spectrum_tags.tags[length]:	
 					file.write(str(tag) + "\n")
 		
 	file.close()
@@ -149,23 +152,20 @@ def mibig_parser():
 	
 	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
 		
-		#(longest_tag, (id, (local_longest, {length: [tag, peaks]})))
-		dataset = [find_longest_tag(pattern=filename, intensity_thresholds=intensity_threshold, 
-											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+		spectra_tags = [find_longest_tag(pattern=filename, intensity_thresholds=intensity_threshold, 
+											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)[1]
 												for filename in filenames]
-			
-		dataset = [spectra_data for longest_tag, spectra_data in dataset if spectra_data != []]
+												
+		spectra_tags = itertools.chain.from_iterable(spectra_tags) #flatten list of spectra tags
 		
 		os.chdir(os.path.join(os.getcwd(), os.path.join("..", "out")))
 		file = open(out + ".out", 'w')
-		if(len(dataset) > 0):
-			for pattern_results in dataset:
-				for id, (local_longest, tags) in pattern_results: #print the id of each spectrum, the current tag length, and all tags with that length
-					for length in range(local_longest):
-						if(length in tags.keys()):
-							file.write("---" + str(id) + " " + str(length) + "---\n")
-							for tag in tags[length]:	
-								file.write(str(tag) + "\n")
+		for spectrum_tags in spectra_tags:
+			for length in range(spectrum_tags.longest_tag):
+				if(length in spectrum_tags.tags.keys()):
+					file.write("---" + str(spectrum_tags.id) + " " + str(length) + "---\n")
+					for tag in spectrum_tags.tags[length]:	
+						file.write(str(tag) + "\n")
 		
 		file.close()
 
