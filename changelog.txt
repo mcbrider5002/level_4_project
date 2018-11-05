@@ -1,6 +1,8 @@
 Orderings of readings in MassSpectrum can now be mapped back to their original indices.
 	This is done automatically when adding indices to a tag in find_sequence_tags.
 
+Graphs of tags across the top of a spectrum can now be plotted!	
+	
 ---
 
 Tests moves to tests.py
