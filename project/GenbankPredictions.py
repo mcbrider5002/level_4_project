@@ -5,4 +5,4 @@ class GenbankPredictions():
 		self.predictions = predictions
 		
 	def __str__(self):
-		return "---" + self.overall_prediction + "---\n" + str(predictions) + "\n\n"
+		return "---" + str(self.overall_prediction) + "---\n" + str(self.predictions) + "\n\n"

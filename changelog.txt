@@ -5,7 +5,7 @@ Graphs of tags across the top of a spectrum can now be plotted!
 	
 ---
 
-Tests moves to tests.py
+Tests moved to tests.py
 
 Fix to flatten and test for flatten.
 

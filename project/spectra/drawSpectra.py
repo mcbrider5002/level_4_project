@@ -58,7 +58,7 @@ def drawSpectrum(spectrum, tag, colour_key=default_colours):
 def main():
 	record = parser.load_files_from_dir(path=os.path.join(os.getcwd(), "spectraData"), pattern="CCMSLIB00000078177.ms")[0]
 	spectrum = setup_mass_spectra(record)
-	spectrum.filter_intensity()
+	spectrum.filter_intensity(intensity_threshold=spectrum.max_intensity()*0.05)
 	spectrum.sort_by_mass()
 	spectrum_tags = spectrum.find_sequence_tags()
 	tags = spectrum_tags.tags[spectrum_tags.longest_tag]
