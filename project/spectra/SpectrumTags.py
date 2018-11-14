@@ -16,10 +16,21 @@ class SpectrumTags():
 		return {length:(itertools.chain.from_iterable([tag.expand_tag_notation() for tag in tag_list])) for length, tag_list in self.tags.items()}
 		
 	'''Convenience method to flatten the dictionary form of the tags (where they are stored by length) into a single list (in no guaranteed order).'''
-	def flatten_tags(self):
+	def flatten_tags(self): 
 		return list(itertools.chain.from_iterable([tags for length, tags in self.tags.items()]))
 		
 	'''Return all tags of the given length.'''
 	def filter_by_length(self, length):
 		return self.tag_dict[length] if (length in self.tags) else []
 		
+	'''Returns counts of all unique components in all the tags in the spectrum.'''
+	def component_counts(self):
+		dict = defaultdict(lambda: return 0)
+		for tag in self.flatten_tags:
+			for component, count in tag.items():
+				dict[component] += count
+		return dict
+		
+	'''Returns a list of all unique components in all the tags in the spectrum.'''
+	def unique_components(self):
+		return self.component_counts.keys()
