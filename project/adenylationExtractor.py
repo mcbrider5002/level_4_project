@@ -1,7 +1,7 @@
 from Bio import SeqIO
 from collections import defaultdict
 
-from GenbankPredictions import GenbankPredictions
+from CDSPrediction import CDSPrediction
 from GenbankFile import GenbankFile
 
 #find all the features with a non-empty antismash prediction
@@ -17,6 +17,7 @@ aSDomains = [feature for feature in SeqIO.read("c00001_NODE_1_...cluster001.gbk"
 
 #print(aSDomains)
 
+#Gives a list of lists, where internal lists contain asDomain predictions, grouped by the CDS they are a subsection of
 grouped_aSDomains = []
 for feature in CDS:
 	aSDomainGroup = []
@@ -34,11 +35,12 @@ print(grouped_aSDomains)
 
 gbk_file = []
 for zipped_CDS, zipped_aSDs in zip(CDS, grouped_aSDomains):
-	zipped_aSDs = [aSD["specificity"] for aSD in zipped_aSDs]
-	overall_prediction = zipped_CDS.qualifiers[aSProdPred]
-	predictions = {}
-	gbk_file.append(GenbankPredictions(overall_prediction, predictions))
-GenbankFile([GenbankPredictions(zipped_CDS.qualifiers["aSProdPred"], zipped_aSD) ])
+	overall_prediction = zipped_CDS.qualifiers["aSProdPred"]
+
+	zipped_aSDs = [aSD.qualifiers["specificity"] for aSD in zipped_aSDs]
+	predictions = [{(" ".join(prediction.split(' ')[:-1])).strip(':') : prediction.split(' ')[-1] for prediction in asD} for asD in zipped_aSDs]
+	gbk_file.append(CDSPrediction(overall_prediction, predictions))
+gbk_file = GenbankFile(gbk_file)
 
 print(gbk_file)
 	

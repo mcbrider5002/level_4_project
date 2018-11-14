@@ -38,3 +38,7 @@ class Tag():
 		recursive_expansion([], split_tag, 0, new_tags)
 			
 		return new_tags
+		
+	'''Breaks up tag, returning a list of its components.'''
+	def decompose_tag(self):
+		return self.tag.split('-')[1:-1]

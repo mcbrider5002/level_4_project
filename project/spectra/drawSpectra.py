@@ -40,7 +40,7 @@ def drawSpectrum(spectrum, tag, colour_key=default_colours):
 	tag_height = (spectrum.max_intensity()) * 1.01
 	text_height = tag_height * 1.01
 	
-	split_tag = (tag.tag.split('-'))[1:-1]
+	split_tag = tag.decompose_tag()
 	for compound, mass1, mass2 in zip(split_tag, tag.masses[0:-1], tag.masses[1:]):
 		intensity_min = np.min(spectrum.ms2peaks[:, MassSpectrum.INTENSITY])
 		ax.plot(np.array([mass1, mass1]), np.array([tag_height, intensity_min]), color="r", linestyle="dashed")

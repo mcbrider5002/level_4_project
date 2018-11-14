@@ -111,10 +111,6 @@ class MassSpectrum():
 		intensity_threshold = 0.05*self.max_intensity() if intensity_threshold is None else intensity_threshold #default value
 		above_threshold, = (self.ms2peaks[:, self.INTENSITY] > intensity_threshold).nonzero()
 		self.update_mappings(above_threshold)
-		'''print(above_threshold)
-		print(above_threshold.nonzero())
-		print(self.mappings)
-		print()'''
 		self.ms2peaks = self.ms2peaks[above_threshold, :]
 	
 	'''Normalises mass intensity readings so the max reading is equal to some value.
