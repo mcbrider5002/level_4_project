@@ -137,10 +137,10 @@ class MassSpectrum():
 		return mass - (self.max_mass() * mass_tolerance), mass + (self.max_mass() * mass_tolerance)
 		
 	#######################################################
-	#Pass one of these names to anything that accepts a mass tolerance mode with instance.NAME
-	#(This is just a convenience to make this class easier to read - just the function name without the brackets will do, if you want)
-	STATIC_MASS_TOLERANCE = static_mass_tolerance
-	PERCENTILE_MASS_TOLERANCE = percentile_mass_tolerance
+	#Pass one of these names to anything that accepts a mass tolerance mode with MassSpectrum.NAME
+	#(Lambdas allow us to fix length of parameter list for use as a variable while keeping static and percentile mass tolerance static)
+	STATIC_MASS_TOLERANCE = lambda self, m, mt: self.static_mass_tolerance(m, mt)
+	PERCENTILE_MASS_TOLERANCE = lambda self, m, mt: self.percentile_mass_tolerance(m, mt)
 	PPM_MASS_TOLERANCE = ppm_mass_tolerance
 	#######################################################
 	
@@ -208,7 +208,7 @@ class MassSpectrum():
 		Returns a dictionary of lists of sequence tags (with no subsequences because those can be reconstructed from longer tags), stored under their length.'''
 	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
-		mass_tolerance_mode = self.PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
+		mass_tolerance_mode = MassSpectrum.PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
 	
 		tag_paths = [defaultdict(list) for item in self.ms2peaks]  #our provisional data structure where each entry is a dictionary representing a peak,
 																	#with keys indices of other (later) peaks and values a list of possible compounds which could be represented
@@ -222,10 +222,7 @@ class MassSpectrum():
 			#for each compound check if any mass differences are approximately equal to the mass of a compound in the mass table and add it to tag_paths if so
 			for compound, mass in self.mass_table.items():
 			
-				if(mass_tolerance_mode == MassSpectrum.ppm_mass_tolerance):
-					lower_threshold, upper_threshold = self.ppm_mass_tolerance(mass, mass_threshold)
-				else:
-					lower_threshold, upper_threshold = mass_tolerance_mode(mass, mass_threshold)
+				lower_threshold, upper_threshold = mass_tolerance_mode(self, mass, mass_threshold)
 					
 				candidate_positions, = (np.logical_and(mass_differences <= upper_threshold, mass_differences >= lower_threshold)).nonzero() #get indices where element between threshold 
 				candidate_positions += index + 1 #adjust for the offset in only checking part of the array (since peaks are directional we only check succeeding ones)

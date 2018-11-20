@@ -1,3 +1,8 @@
+Changed hacky workaround for using a variable to switch mass tolerance methods...
+	As a result, now when passing mass_tolerance modes they must be passed as a class variable, not an instance variable.
+
+---
+
 Orderings of readings in MassSpectrum can now be mapped back to their original indices.
 	This is done automatically when adding indices to a tag in find_sequence_tags.
 
