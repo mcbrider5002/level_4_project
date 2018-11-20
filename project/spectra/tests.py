@@ -237,13 +237,13 @@ def test_mass_tolerance_calculations():
 	if(not(all([np.allclose(mass_tolerance, MassSpectrum.static_mass_tolerance(spectrum.ms2peaks, percentile))
 				for mass_tolerance, spectrum, percentile in zip(mass_tolerances, spectra, percentiles)]))):
 		print("static_mass_tolerance fails test!")
-	if(not(all([np.allclose(mass_tolerance, MassSpectrum.percentile_mass_tolerance(spectrum.ms2peaks, 0.05))
+	if(not(all([np.allclose(mass_tolerance, MassSpectrum.rel_ppm_mass_tolerance(spectrum.ms2peaks, 0.05))
 				for mass_tolerance, spectrum in zip(mass_tolerances, spectra)]))):
 		print("percentile_mass_tolerance fails test!")
 		
 	percentiles = [0.05 * maxm for maxm in spectra_aggregate.max_mass_local()]
 	mass_tolerances = [(spectrum.ms2peaks - percentile, spectrum.ms2peaks + percentile) for spectrum, percentile in zip(spectra, percentiles)]
-	if(not(all([np.allclose(mass_tolerance, spectrum.ppm_mass_tolerance(spectrum.ms2peaks, 0.05))
+	if(not(all([np.allclose(mass_tolerance, spectrum.max_ppm_mass_tolerance(spectrum.ms2peaks, 0.05))
 				for mass_tolerance, spectrum in zip(mass_tolerances, spectra)]))):
 		print("ppm_mass_tolerance fails test!")
 	

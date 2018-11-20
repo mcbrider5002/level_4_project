@@ -129,19 +129,19 @@ class MassSpectrum():
 		
 	'''Calculates an upper and lower bound for a mass tolerance given a mass and a percentage value to vary by, with percentage relative to each mass reading.'''
 	@staticmethod
-	def percentile_mass_tolerance(mass, mass_tolerance):
+	def rel_ppm_mass_tolerance(mass, mass_tolerance):
 		return (mass * (1 - mass_tolerance)), (mass * (1 + mass_tolerance))
 		
 	'''Calculates an uppper and lower bound for a mass tolerance given a mass and a percentage value to vary by, with percentage relative to the largest mass reading.'''
-	def ppm_mass_tolerance(self, mass, mass_tolerance):
+	def max_ppm_mass_tolerance(self, mass, mass_tolerance):
 		return mass - (self.max_mass() * mass_tolerance), mass + (self.max_mass() * mass_tolerance)
 		
 	#######################################################
 	#Pass one of these names to anything that accepts a mass tolerance mode with MassSpectrum.NAME
 	#(Lambdas allow us to fix length of parameter list for use as a variable while keeping static and percentile mass tolerance static)
 	STATIC_MASS_TOLERANCE = lambda self, m, mt: self.static_mass_tolerance(m, mt)
-	PERCENTILE_MASS_TOLERANCE = lambda self, m, mt: self.percentile_mass_tolerance(m, mt)
-	PPM_MASS_TOLERANCE = ppm_mass_tolerance
+	REL_PPM_MASS_TOLERANCE = lambda self, m, mt: self.rel_ppm_mass_tolerance(m, mt)
+	MAX_PPM_MASS_TOLERANCE = max_ppm_mass_tolerance
 	#######################################################
 	
 	########################	
@@ -208,7 +208,7 @@ class MassSpectrum():
 		Returns a dictionary of lists of sequence tags (with no subsequences because those can be reconstructed from longer tags), stored under their length.'''
 	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
-		mass_tolerance_mode = MassSpectrum.PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
+		mass_tolerance_mode = MassSpectrum.MAX_PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value
 	
 		tag_paths = [defaultdict(list) for item in self.ms2peaks]  #our provisional data structure where each entry is a dictionary representing a peak,
 																	#with keys indices of other (later) peaks and values a list of possible compounds which could be represented

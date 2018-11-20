@@ -3,6 +3,8 @@ Graphs now display parent mass.
 Changed hacky workaround for using a variable to switch mass tolerance methods...
 	As a result, now when passing mass_tolerance modes they must be passed as a class variable, not an instance variable.
 
+Changed names of 'percentile_mass_tolerance' and 'ppm_mass_tolerance' to 'rel_ppm_mass_tolerance' and 'max_ppm_mass_tolerance' to reflect that both calculate some form of ppm.
+
 ---
 
 Orderings of readings in MassSpectrum can now be mapped back to their original indices.
