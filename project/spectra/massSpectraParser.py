@@ -17,6 +17,10 @@ keys representing record headers in the file and various structures for values''
 def default_parser(dict, key, split_line):
 	dict[key] = " ".join(split_line)
 
+'''Parses as a single input of type float.'''
+def float_parser(dict, key, split_line):
+	dict[key] = float(split_line[0])
+	
 '''Parses line as one in a list of arrays of size 2 of related data items separated by spaces'''
 def ms2peaks_parser(dict, key, split_line):
 	dict[key] += [np.array((split_line[0], split_line[1]), dtype=float)]
@@ -33,6 +37,7 @@ def list_parser(dict, key, split_line):
 	these will continue to be used to parse new lines until a new field name is encountered;
 	to extend the parser just write a new method and put it in the dictionary under the field's name.'''
 parsing_modes = {	
+					"parentmass": float_parser,
 					"ms2peaks": ms2peaks_parser
 				}
 				

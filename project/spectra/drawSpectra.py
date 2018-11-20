@@ -47,13 +47,14 @@ def drawSpectrum(spectrum, tag, colour_key=default_colours):
 		ax.plot(np.array([mass2, mass2]), np.array([tag_height, intensity_min]), color="r", linestyle="dashed")
 		ax.annotate(s='', xy=(mass2,tag_height), xytext=(mass1,tag_height), arrowprops=dict(arrowstyle='<->', shrinkA=0, shrinkB=0, color=colour_key.get(compound, "b")))
 		ax.text(mass1, text_height, compound)
-		
-	'''for mass, intensity in zip(spectrum.ms2peaks[:, MassSpectrum.MASS], spectrum.ms2peaks[:, MassSpectrum.INTENSITY]):
-		ax.plot(np.array([mass, mass]), np.array([0, intensity]), color="black")'''
-		
+
 	for mass, intensity in zip(spectrum.ms2peaks[:, MassSpectrum.MASS], spectrum.ms2peaks[:, MassSpectrum.INTENSITY]):
 		ax.plot(np.array([mass, mass]), np.array([0, intensity]), color="black")
-
+		
+	p_mass = spectrum.parent_mass
+	ax.plot(np.array([p_mass, p_mass]), np.array([0, spectrum.max_intensity()*1.05]), color="cyan", linestyle="dashed", label="Parent Mass")
+	ax.legend()
+	
 	ax.set(xlabel="Mass (m/z)", ylabel="Intensity", title=spectrum.id)
 	ax.set_ylim(ymin=0)
 
