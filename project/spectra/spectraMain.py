@@ -144,7 +144,9 @@ def mibig_parser():
 	filenames = [line.split(',')[1] + ".ms" for line in file]
 	file.close()
 	
-	mass_tolerance_modes = [MassSpectrum.STATIC_MASS_TOLERANCE, MassSpectrum.STATIC_MASS_TOLERANCE, MassSpectrum.PPM_MASS_TOLERANCE] * 2
+	mass_tolerance_modes = [MassSpectrum.STATIC_MASS_TOLERANCE, 
+							MassSpectrum.STATIC_MASS_TOLERANCE, 
+							MassSpectrum.MAX_PPM_MASS_TOLERANCE] * 2
 	mass_thresholds = [0.01, 0.001, 0.00001] *2
 	intensity_thresholds = [0.05, 0.005] *3
 	outs = ["mibig_hMass_hInten", "mibi_lMass_lInten", "mibig_ppmMass_hInten", "mibig_hMass_lInten", "mibig_lMass_hInten"]
