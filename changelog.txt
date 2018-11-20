@@ -1,3 +1,5 @@
+Graphs now display parent mass.
+
 Changed hacky workaround for using a variable to switch mass tolerance methods...
 	As a result, now when passing mass_tolerance modes they must be passed as a class variable, not an instance variable.
 
