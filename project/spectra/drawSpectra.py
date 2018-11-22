@@ -4,10 +4,10 @@ import numpy as np
 import os
 import copy
 
-import massSpectraParser as parser
-from MassSpectrum import MassSpectrum
-from Tag import Tag
-from spectraMain import setup_mass_spectra
+import spectra.massSpectraParser as parser
+from spectra.MassSpectrum import MassSpectrum
+from spectra.Tag import Tag
+from spectra.spectraMain import setup_mass_spectra
 
 #A dict specifying the default colours to use for each line
 default_colours = {	

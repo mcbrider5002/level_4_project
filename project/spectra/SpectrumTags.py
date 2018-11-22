@@ -1,3 +1,4 @@
+from collections import defaultdict
 import itertools
 
 '''Class to contain all sequence tags from a spectrum.'''
@@ -21,16 +22,16 @@ class SpectrumTags():
 		
 	'''Return all tags of the given length.'''
 	def filter_by_length(self, length):
-		return self.tag_dict[length] if (length in self.tags) else []
+		return self.tags[length] if (length in self.tags) else []
 		
 	'''Returns counts of all unique components in all the tags in the spectrum.'''
 	def component_counts(self):
-		dict = defaultdict(lambda: return 0)
-		for tag in self.flatten_tags:
-			for component, count in tag.items():
+		dict = defaultdict(lambda: 0)
+		for tag in self.flatten_tags():
+			for component, count in tag.component_counts().items():
 				dict[component] += count
 		return dict
 		
 	'''Returns a list of all unique components in all the tags in the spectrum.'''
 	def unique_components(self):
-		return self.component_counts.keys()
+		return self.component_counts().keys()

@@ -3,8 +3,8 @@ import copy
 from decimal import Decimal
 from collections import defaultdict
 
-from Tag import Tag
-from SpectrumTags import SpectrumTags
+from spectra.Tag import Tag
+from spectra.SpectrumTags import SpectrumTags
 
 '''A wrapper class for mass-spectrometry files.'''
 class MassSpectrum():

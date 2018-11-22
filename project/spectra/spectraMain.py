@@ -2,12 +2,12 @@ import os
 import numpy as np
 import itertools
 
-import massSpectraParser as parser
-from MassSpectrum import MassSpectrum
-from MassSpectraAggregate import MassSpectraAggregate
-from Tag import Tag
-from SpectrumTags import SpectrumTags
-from tests import tests as tests
+import spectra.massSpectraParser as parser
+from spectra.MassSpectrum import MassSpectrum
+from spectra.MassSpectraAggregate import MassSpectraAggregate
+from spectra.Tag import Tag
+from spectra.SpectrumTags import SpectrumTags
+from spectra.tests import tests as tests
 
 ##########
 ###Data###
@@ -181,7 +181,7 @@ def main():
 	
 	tests()
 	
-	#mibig_parser()
+	mibig_parser()
 	
 	#SecArgGlnPheArgIle
 	#...223959.ms
