@@ -130,10 +130,10 @@ def main():
 											"matching_0.01Mass_0.005Inten", "mibig_0.001Mass_0.05Inten"]
 	zipped = zip(mass_tolerance_modes, mass_thresholds, intensity_thresholds, outs)
 	
-	counts = []
+	path = os.path.join(os.path.join(os.getcwd(), "spectra"), "spectraData")
+	tables = []
 	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
 		
-		path = os.path.join(os.path.join(os.getcwd(), "spectra"), "spectraData")
 		spectra_tags = [find_longest_tag(path=path, pattern=filename, intensity_thresholds=intensity_threshold, 
 											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)[1]
 												for filename in [spectrum + ".ms" for gbk, spectrum in connections]]
@@ -146,6 +146,7 @@ def main():
 		#compare unique components of spectra tags to unshuffled gbk
 		gbk_components = [gbk.unique_components() for gbk in gbk_files]
 		
+		counts = []
 		counts.append(compare_unique_components(spectra_tags, gbk_components))
 		headers = ["Original:"]
 		
@@ -159,6 +160,9 @@ def main():
 			counts.append(compare_unique_components(spectra_tags, [list(set(itertools.chain.from_iterable(gbk))) for gbk in shuffled_gbks]))
 			headers.append("Random %d:")
 			
+		tables.append(counts)
+		
+	for counts in tables:
 		print("---%s---" % out)
 		for header, (correct, spectra_total, gbk_total) in zip(headers, counts):
 			print("%s Correct: %d Spectra_Com: %d Gbk_Com: %d" % (header, correct, spectra_total, gbk_total))

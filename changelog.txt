@@ -1,3 +1,9 @@
+Fixed some issues with resource access... Still basically a workaround though.
+
+We have a semi-functional MiBIG parser... Still needs to be completely implemented.
+
+---
+
 Graphs now display parent mass.
 
 Changed hacky workaround for using a variable to switch mass tolerance methods...

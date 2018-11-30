@@ -5,11 +5,10 @@ import string
 import itertools
 from collections import defaultdict
 
-import spectra.massSpectraParser as parser
-from spectra.MassSpectrum import MassSpectrum
-from spectra.MassSpectraAggregate import MassSpectraAggregate
-from spectra.Tag import Tag
-from spectra.SpectrumTags import SpectrumTags
+from .MassSpectrum import MassSpectrum
+from .MassSpectraAggregate import MassSpectraAggregate
+from .Tag import Tag
+from .SpectrumTags import SpectrumTags
 
 ##########
 ###Data###

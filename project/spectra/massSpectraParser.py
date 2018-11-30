@@ -107,16 +107,14 @@ def parse_file(file):
 
 '''Takes a directory under path, and a file name pattern under pattern,
 	and feeds them all to the file parsing method for parsing.'''
-def load_files_from_dir(path=os.getcwd(), pattern="*.ms"):
-	
-	os.chdir(path) #changes pwd if path is set
+def load_files_from_dir(path=os.path.dirname(__file__), pattern="*.ms"):
 	
 	records = [] #each element is a dictionary representing a parsed file
-	
-	for filename in glob.glob(pattern):
-	
-		file = open(filename, 'r')
-		records += [(filename,parse_file(file))]
+
+	for filename in glob.glob(os.path.join(path, pattern)):
+
+		file = open(os.path.join(path, filename), 'r')
+		records += [(os.path.basename(filename),parse_file(file))]
 		file.close()
 		
 	return records
@@ -132,7 +130,7 @@ def main():
 	import time
 	times = []
 	
-	path = os.path.join(os.getcwd(), "spectraData")
+	path = os.path.join(os.path.dirname(__file__), "spectraData")
 	
 	#time small file
 	start = time.clock()
@@ -152,9 +150,8 @@ def main():
 	#time all files but just reading things in as strings into a list, with no manipulation other than split()
 	start = time.clock()
 	string_list = []
-	os.chdir(path)
 	for filename in glob.glob("*.ms"):
-		file = open(filename, 'r')
+		file = open(os.path.join(path, filename), 'r')
 		for line in file:
 			string_list += line.split()
 		file.close()

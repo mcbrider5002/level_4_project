@@ -1,5 +1,5 @@
-from spectra.Tag import Tag
-from spectra.SpectrumTags import SpectrumTags
+from .Tag import Tag
+from .SpectrumTags import SpectrumTags
 
 '''A wrapper class to make multiple operations on MassSpectra easier and with the use of less boilerplate.
 	It is NOT a guarantee of more efficiency, it's just a convenience.

@@ -2,12 +2,12 @@ import os
 import numpy as np
 import itertools
 
-import spectra.massSpectraParser as parser
-from spectra.MassSpectrum import MassSpectrum
-from spectra.MassSpectraAggregate import MassSpectraAggregate
-from spectra.Tag import Tag
-from spectra.SpectrumTags import SpectrumTags
-from spectra.tests import tests as tests
+from .massSpectraParser import load_files_from_dir
+from .MassSpectrum import MassSpectrum
+from .MassSpectraAggregate import MassSpectraAggregate
+from .Tag import Tag
+from .SpectrumTags import SpectrumTags
+from .tests import tests as tests
 
 ##########
 ###Data###
@@ -56,7 +56,7 @@ def setup_mass_spectra(file, mass_table=AA_mass_table):
 						mass_table=mass_table)
 						
 '''Convenience function to perform the multiple steps necessary to find tags and their ids.'''
-def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
+def find_longest_tag(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
 						intensity_thresholds=None,
 						mass_tolerance_mode=None, mass_threshold=0.00001):
 	
@@ -64,7 +64,7 @@ def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.m
 	
 	print("Starting to parse for pattern \"" + pattern + "\"...")
 	start = time.clock()
-	records = parser.load_files_from_dir(path=path, pattern=pattern)
+	records = load_files_from_dir(path=path, pattern=pattern)
 	print("Time taken: " + str(time.clock() - start))
 	
 	print("Converting to objects...")
@@ -95,7 +95,7 @@ def find_longest_tag(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.m
 	return longest_tag, tags
 	
 '''Prints out all the tied-longest tags and their spectrum id.'''
-def print_longest_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
+def print_longest_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
 						intensity_thresholds=None,
 						mass_tolerance_mode=None, mass_threshold=0.00001):
 						
@@ -109,10 +109,10 @@ def print_longest_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*
 			print(tag)
 	
 '''Writes to "tags.out" on the specifed path all tags with the specified length and their spectrum id.'''	
-def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms", 
+def write_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
 						intensity_thresholds=None,
 						mass_tolerance_mode=None, mass_threshold=0.00001,
-						lengths_to_print=None, output_path=os.path.join(os.getcwd(), "out"),
+						lengths_to_print=None, output_path=os.path.join(os.path.dirname(__file__), "out"),
 						filename="tags.out"):
 						
 	longest_tag, spectra_tags = find_longest_tag(path=path, pattern=pattern, intensity_thresholds=intensity_thresholds, 
@@ -122,8 +122,7 @@ def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms",
 	lengths_to_print = [lengths_to_print] if isinstance(lengths_to_print, str) else lengths_to_print #take string input
 	lengths_to_print = list(filter(lambda length : length <= longest_tag and length > 0, lengths_to_print)) #remove impossible indices
 	
-	os.chdir(output_path)
-	file = open(filename, 'w')
+	file = open(os.path.join(output_path, filename), 'w')
 	for spectrum_tags in spectra_tags: #print the id of each spectrum, the current tag length, and all tags with that length
 	
 		for length in lengths_to_print:
@@ -138,7 +137,7 @@ def write_tags(path=os.path.join(os.getcwd(), "spectraData"), pattern="*.ms",
 	file.close()
 
 '''Helper to take the mibig file and automatically write the contents of corresponding files to tags.out.'''	
-def mibig_parser():
+def mibig_parser(inpath=os.path.join(os.path.dirname(__file__), "spectraData")):
 
 	file = open("mibig_gnps_links_q3.csv", 'r')
 	filenames = [line.split(',')[1] + ".ms" for line in file]
@@ -152,16 +151,16 @@ def mibig_parser():
 	outs = ["mibig_hMass_hInten", "mibi_lMass_lInten", "mibig_ppmMass_hInten", "mibig_hMass_lInten", "mibig_lMass_hInten"]
 	zipped = zip(mass_tolerance_modes, mass_thresholds, intensity_thresholds, outs)
 	
+	outpath = os.path.join(os.path.dirname(__file__), "out")
 	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
 		
-		spectra_tags = [find_longest_tag(pattern=filename, intensity_thresholds=intensity_threshold, 
+		spectra_tags = [find_longest_tag(path=inpath, pattern=filename, intensity_thresholds=intensity_threshold, 
 											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)[1]
 												for filename in filenames]
 												
 		spectra_tags = itertools.chain.from_iterable(spectra_tags) #flatten list of spectra tags
 		
-		os.chdir(os.path.join(os.getcwd(), os.path.join("..", "out")))
-		file = open(out + ".out", 'w')
+		file = open(os.path.join(outpath, (out + ".out")), 'w')
 		for spectrum_tags in spectra_tags:
 			for length in range(spectrum_tags.longest_tag):
 				if(length in spectrum_tags.tags.keys()):
@@ -177,7 +176,7 @@ def mibig_parser():
 		
 def main():
 
-	path = os.path.join(os.getcwd(), "spectraData")
+	path = os.path.join(os.path.dirname(__file__), "spectraData")
 	
 	tests()
 	
@@ -220,7 +219,7 @@ def main():
 						lengths_to_print=range(4,100), filename="tags_10ppmMass_0.05Int.out")
 	
 	'''print("Parsing, converting to object...")
-	mibig_spectrum_1 = setup_mass_spectra(parser.load_files_from_dir(path=path, pattern="CCMSLIB00000223959.ms")[0])
+	mibig_spectrum_1 = setup_mass_spectra(load_files_from_dir(path=path, pattern="CCMSLIB00000223959.ms")[0])
 	filename, mis1 = mibig_spectrum_1
 	print("Filtering intensity...")
 	mis1.filter_intensity()
