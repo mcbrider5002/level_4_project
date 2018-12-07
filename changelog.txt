@@ -1,5 +1,7 @@
 Working(?) but not fully tested version of simple amino acid overlap experiment.
 
+Parser to parse a particular format of mgf added.
+
 ---
 
 Fixed some issues with resource access... Still basically a workaround though.
