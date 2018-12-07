@@ -59,6 +59,7 @@ def parse_genbank(path, filename):
 	#collect all CDS predictions
 	CDS = [feature.qualifiers["product"] for feature in SeqIO.read(os.path.join(path, filename), "genbank").features if "product" in feature.qualifiers.keys()]
 	#filter the ones with amino acids
+	print(CDS)
 	CDS = [[AA_names[AA] for AA in AA_names if (AA in product)] for product in CDS]
 	
 	#filter to unique
@@ -154,11 +155,11 @@ def main():
 		shuffled_gbks = [[cds.unique_components() for cds in gbk.predictions] for gbk in gbk_files] 
 		for i in range(5):
 			#shuffle gbks components
-			for i in range(10000):
+			for j in range(10000):
 				random_swap(shuffled_gbks) #shuffle
 			#append counts for shuffled version
 			counts.append(compare_unique_components(spectra_tags, [list(set(itertools.chain.from_iterable(gbk))) for gbk in shuffled_gbks]))
-			headers.append("Random %d:")
+			headers.append("Random %d:" % i)
 			
 		tables.append(counts)
 		

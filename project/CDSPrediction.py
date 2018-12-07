@@ -13,7 +13,7 @@ class CDSPrediction():
 		
 	'''Breaks up predicted tag, returning a list of its components.'''
 	def decompose_tag(self):
-		return self.overall_prediction.split('-')[1:-1]
+		return [split_item for split_item in self.overall_prediction.split('-') if split_item != ""]
 		
 	'''Returns a dictionary of counts of all unique components possibly in this predicted tag.'''
 	def component_counts(self):

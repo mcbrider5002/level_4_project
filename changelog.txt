@@ -1,3 +1,7 @@
+Working(?) but not fully tested version of simple amino acid overlap experiment.
+
+---
+
 Fixed some issues with resource access... Still basically a workaround though.
 
 We have a semi-functional MiBIG parser... Still needs to be completely implemented.

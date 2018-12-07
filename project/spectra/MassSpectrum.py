@@ -205,7 +205,7 @@ class MassSpectrum():
 		mass_threshold specifies the value to be used for the mass tolerance. So in the case of a fixed mass tolerance of 0.05 it will give +-0.05 to the value
 		and in the case of percentile it will give +-5%.
 		
-		Returns a dictionary of lists of sequence tags (with no subsequences because those can be reconstructed from longer tags), stored under their length.'''
+		Returns a SpectrumTags object of sequence tags (with no subsequences because those can be reconstructed from longer tags).'''
 	def find_sequence_tags(self, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
 		mass_tolerance_mode = MassSpectrum.MAX_PPM_MASS_TOLERANCE if mass_tolerance_mode is None else mass_tolerance_mode #default value

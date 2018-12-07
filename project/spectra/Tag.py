@@ -43,7 +43,7 @@ class Tag():
 		
 	'''Breaks up tag, returning a list of its components.'''
 	def decompose_tag(self):
-		return self.tag.split('-')[1:-1]
+		return [split_item for split_item in self.tag.split('-') if split_item != ""]
 		
 	'''Returns a dictionary of counts of all unique components in this tag.'''
 	def component_counts(self):
@@ -54,4 +54,4 @@ class Tag():
 	
 	'''Returns a list of all unique components in this tag.'''
 	def unique_components(self):
-		return self.component_counts().keys()
+		return list(self.component_counts().keys())
