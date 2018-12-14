@@ -1,3 +1,11 @@
+Simple amino acids experiment has some bugs fixed and now returns the file with the largest matching between the spectrum and genbank.
+
+Script and some interfaces written to select files from antiSMASH gbk dataset based on certain properties.
+
+Incomplete implementation of complex Pep2Path algorithm added. 
+
+---
+
 Working(?) but not fully tested version of simple amino acid overlap experiment.
 
 Parser to parse a particular format of mgf added.

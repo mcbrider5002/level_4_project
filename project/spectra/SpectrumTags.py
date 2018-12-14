@@ -38,3 +38,7 @@ class SpectrumTags():
 	'''Returns a list of all unique components in all the tags in the spectrum.'''
 	def unique_components(self):
 		return list(self.component_counts().keys())
+	
+	'''Given a tag in string form, returns the highest score found according to the Pep2Path alignment algorithm
+		when comparing it to to all this spectrum's tags.'''	
+	#def alignment_comparison(self, ):
