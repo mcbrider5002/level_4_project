@@ -77,7 +77,7 @@ def check_has_product(files):
 	return [(name, file) for name, file in files if any([feature.type == "cluster" and (not "product" in feature.qualifiers.keys()) for feature in file.features])]
 	
 def main():
-	path = os.path.join(os.getcwd(), "justin-20181022")
+	path = os.path.join(os.path.join(os.getcwd(), "genbank"), "justin-20181022")
 	outpath = os.getcwd()
 	
 	names = [name for name in glob(os.path.join(path, "*.gbk")) if (not "final" in os.path.basename(name))]

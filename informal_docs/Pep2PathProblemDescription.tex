@@ -25,14 +25,13 @@ this novel product - this is a generalisation of peptidogenomics, the matching o
 By observing species with the same BGC produced this product (clustering), we can generally assume this BGC has a good chance of 
 producing the product in question. \\
 
-Pep2Path is a software that can probabilistically match peptidic products (a subset of our field of interest) to BGCs. 
+Pep2Path is a piece of software that can probabilistically match peptidic products (a subset of our field of interest) to BGCs. 
 Given the output from a mass spectrometer we can reconstruct composition of a peptide and order of amino acids at consecutive mass-peaks, 
 using a mass-translation table, and given a geonome sequence, we can use tools like antiSMASH and NRPSPredictor to 
 identify potential candidate BGCs in the geonome. Pep2Path then takes these two outputs and calculates the most likely matches of
 sequence to BGC. \\
 
-However, Pep2Path is not very well-maintained, and its codebase has proven to be largely unmaintainable and inextensible.
-We wish to implement a new software which can perform some of the useful functionality of the original Pep2Path,
-while offering more useful features and the potential for future development. 
+We wish to implement a similar functionality that can be integrated into a local codebase, where we match biological products in general to candidate BGCs,
+using both the algorithm identified in the original Pep2Path paper and other assorted techniques. This also requires the implementation of a program to extract sequence tags from our local set of mass spectrometry data. \\
 
 \end{document}

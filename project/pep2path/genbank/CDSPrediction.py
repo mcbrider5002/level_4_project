@@ -35,4 +35,3 @@ class CDSPrediction():
 	'''Compares to all tags in a SpectrumTags object returned by spectra tag finding methods.'''
 	def compare_to_spectrum(self, tag_dict):
 		pass
-		
