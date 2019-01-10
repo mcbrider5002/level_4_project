@@ -1,4 +1,5 @@
 import itertools
+import copy
 import random
 import os
 
@@ -14,14 +15,14 @@ def random_component(gbk_files):
 	component = random.randint(0, len(gbk_files[file][cds]) - 1)
 	return file, cds, component
 	
-'''Given a twice nested list, swaps two of the innermost elements at random.'''
+'''Given a twice nested list, returns a new list with two of the innermost elements randomly swapped.'''
 def random_swap(gbk_files):
 	file1, cds1, component1 = random_component(gbk_files)
 	file2, cds2, component2 = random_component(gbk_files)
 	if(component1 == -1 or component2 == -1): return gbk_files
-	temp = gbk_files[file1][cds1][component1]
-	gbk_files[file1][cds1][component1] = gbk_files[file2][cds2][component2]
-	gbk_files[file2][cds2][component2] = temp
+	new_files = copy.copy(gbk_files)
+	new_files[file1][cds1][component1] = gbk_files[file2][cds2][component2]
+	new_files[file2][cds2][component2] = gbk_files[file1][cds1][component1]
 	return gbk_files
 	
 '''Given a nested list where internal lists represent genbank files and their contents are their unique components, 
@@ -63,21 +64,24 @@ def compare_unique_components(spectra_names, spectra_components, gbk_names, gbk_
 			max_correct = max(max_correct, (spectrum_name, gbk_name, correct), key=lambda t: t[2])		
 					
 	return total_correct, max_correct, total_comparisons, total_spectra, total_gbk_comp, total_gbk_files
+
+'''A naive matching scoring function that just counts the number of times seq1[i] == seq2[i].'''
+def simple_score(seq1, seq2):
+	return max(count([x == y for x, y in zip(seq1, seq2)]), max(simple_score(seq1[1:], seq2), simple_score(seq1, seq2[1:])))
 	
 '''Given a nested list of spectra then (ordered) components,
 	and a twice-nested list of genbank files, then cds, then (ordered) components,
 	attempts to score a match of each spectrum to each genbank file by comparing the components to each possible ordering of the cds,
 	possibly with some cds reversed.'''
-'''def compare_alignment(spectra_components, gbk_components):
+def compare_alignment(spectra_names, spectra_components, gbk_names, gbk_components):
 	
 	best_score = ("No spectrum!", "No gbk!", 0)
-	for file in files:
+	for (gbk_name, gbk) in zip(gbk_names, gbk_components):
 		products = itertools.product([(cds, "-".join(cds.split("-").reverse())) for cds in file])
-		for product in products:
-			orderings = itertools.permutations(product, len(product))
-			for ordering in orderings:
-				for spectrum in spectra_components:
-					new_score = spectrum.alignment_comparison(ordering)
-					best_score = max(best_score, ("spectrum_name", "gbk_name", new_score))
+		orderings = itertools.permutations(*products, len(product))
+		for ordering in orderings:
+			for (spectrum_name, spectrum) in zip(spectra_names, spectra_components):
+				new_score = simple_score()
+				best_score = max(best_score, (spectrum_name, gbk_name, new_score), key=lambda t: t[2])
 			
-	return best_score'''
+	return best_score

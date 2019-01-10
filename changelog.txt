@@ -1,3 +1,7 @@
+More refactoring for main experiment, untested complex comparison with complex scoring function implemented.
+
+---
+
 Restructuring of project to remove redundant code for experiments (pending more).
 
 ---

@@ -127,7 +127,7 @@ def parse_file(file):
 
 '''Takes a directory under path, and a file name pattern under pattern,
 	and feeds them all to the file parsing method for parsing.'''
-def load_files_from_dir(path=os.path.dirname(__file__), pattern="*.ms"):
+def load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.mgf"):
 	
 	spectra_aggregates = [] #each element is a filename and spectra aggregate of a single .mgf
 
@@ -143,7 +143,7 @@ def load_files_from_dir(path=os.path.dirname(__file__), pattern="*.ms"):
 ##########
 
 def main():
-	return (load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.mgf"))[0][1]
+	print(load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.mgf")[0][1])
 
 if __name__ == "__main__":
 
