@@ -18,7 +18,8 @@ def get_gbks(path=os.path.join(os.path.join(os.path.join(os.getcwd(), "genbank")
 	gbk_dataset.close()
 	return gbk_files, gbk_names
 
-''''''
+'''Shuffles the contents about between Genbank files and CDSes then compares the unique components of these random Genbank files to spectra as a baseline
+	for how well the actual comparison works. (We expect to lose a few components during this process because of filtering out non-unique components.)'''
 def match_shuffled(spectra_names, spectra_tags, cmpts_with_cds, headers, counts, iterations):
 	for i in range(iterations):
 		#shuffle gbks components
@@ -29,6 +30,8 @@ def match_shuffled(spectra_names, spectra_tags, cmpts_with_cds, headers, counts,
 		counts.append(compare.compare_unique_components(spectra_names, spectra_tags, [str(component) for component in shuffled_components], shuffled_components))
 		headers.append("Shuffled %d:" % i)
 
+'''Randomises the Genbank files then compares the unique components of these random Genbank files to spectra as a baseline
+	for how well the actual comparison works. (We expect to lose a few components during this process because of filtering out non-unique components.)'''
 def match_randomised(spectra_names, spectra_tags, gbk_components, headers, counts, iterations):
 	for i in range(iterations):
 		randomised_gbks = compare.randomise_components(gbk_components)
