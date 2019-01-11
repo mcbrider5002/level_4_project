@@ -1,4 +1,8 @@
-More refactoring for main experiment, untested complex comparison with complex scoring function implemented.
+Primitive (apparently) working implementation of complex comparison using stub scoring function.
+
+---
+
+More refactoring for main experiment, untested complex comparison with basic scoring function implemented.
 
 ---
 
