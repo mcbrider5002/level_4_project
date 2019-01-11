@@ -18,10 +18,14 @@ class SpectrumTags():
 	'''Expands all tag notation for all tags in dict, according to the specification in Tag, returning a new tag dict.'''
 	def expand_tag_notation(self):
 		return {length:(itertools.chain.from_iterable([tag.expand_tag_notation() for tag in tag_list])) for length, tag_list in self.tags.items()}
+	
+	'''Returns tags but where each is a list of components rather than a string.'''
+	def decompose_tags(self):
+		return {length:(tag.decompose_tag()) for length, tags in self.tags.items() for tag in tags}
 		
 	'''Convenience method to flatten the dictionary form of the tags (where they are stored by length) into a single list (in no guaranteed order).'''
 	def flatten_tags(self): 
-		return list(itertools.chain.from_iterable([tags for length, tags in self.tags.items()]))
+		return [tag for length, tags in self.tags.items() for tag in tags]
 		
 	'''Return all tags of the given length.'''
 	def filter_by_length(self, length):
@@ -38,7 +42,3 @@ class SpectrumTags():
 	'''Returns a list of all unique components in all the tags in the spectrum.'''
 	def unique_components(self):
 		return list(self.component_counts().keys())
-	
-	'''Given a tag in string form, returns the highest score found according to the Pep2Path alignment algorithm
-		when comparing it to to all this spectrum's tags.'''	
-	#def alignment_comparison(self, ):

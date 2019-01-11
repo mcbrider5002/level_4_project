@@ -26,12 +26,3 @@ class CDSPrediction():
 	'''Gets all the unique components predicted to possibly be in the tag.'''
 	def unique_components(self):
 		return list(self.component_counts().keys())
-		
-	'''Simple comparison where we just check overlap between constituent parts of predicted tag and given tag.'''
-	def compare_to_tag(self, tag):
-		#self.overall_prediction.
-		pass
-		
-	'''Compares to all tags in a SpectrumTags object returned by spectra tag finding methods.'''
-	def compare_to_spectrum(self, tag_dict):
-		pass

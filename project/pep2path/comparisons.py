@@ -61,27 +61,39 @@ def compare_unique_components(spectra_names, spectra_components, gbk_names, gbk_
 					correct += 1
 			
 			total_correct += correct
-			max_correct = max(max_correct, (spectrum_name, gbk_name, correct), key=lambda t: t[2])		
+			max_correct = max(max_correct, (spectrum_name + " " + str(spectrum), gbk_name + " " + str(gbk), correct), key=lambda t: t[2])		
 					
 	return total_correct, max_correct, total_comparisons, total_spectra, total_gbk_comp, total_gbk_files
 
 '''A naive matching scoring function that just counts the number of times seq1[i] == seq2[i].'''
 def simple_score(seq1, seq2):
-	return max(count([x == y for x, y in zip(seq1, seq2)]), max(simple_score(seq1[1:], seq2), simple_score(seq1, seq2[1:])))
+
+	matches = [x.lower() == y.lower() for x, y in zip(seq1, seq2)].count(True)
+	
+	if(len(seq1) == len(seq2)):
+		return matches 
+	elif(len(seq1) == len(seq2)):
+		return max(matches, simple_score(seq1[1:], seq2))
+	else:
+		return max(matches, simple_score(seq1, seq2[1:]))
 	
 '''Given a nested list of spectra then (ordered) components,
 	and a twice-nested list of genbank files, then cds, then (ordered) components,
 	attempts to score a match of each spectrum to each genbank file by comparing the components to each possible ordering of the cds,
-	possibly with some cds reversed.'''
-def compare_alignment(spectra_names, spectra_components, gbk_names, gbk_components):
+	possibly with some cds reversed (as specified by the algorithm in the original Pep2Path paper).'''
+def compare_alignment(spectra_names, spectra_components, gbk_names, gbk_tags):
 	
 	best_score = ("No spectrum!", "No gbk!", 0)
-	for (gbk_name, gbk) in zip(gbk_names, gbk_components):
-		products = itertools.product([(cds, "-".join(cds.split("-").reverse())) for cds in file])
-		orderings = itertools.permutations(*products, len(product))
+	
+	for (gbk_name, gbk) in zip(gbk_names, gbk_tags):
+	
+		mirror = lambda m : (m, list(reversed(m))) if (m != list(reversed(m))) else (m,)
+		products = itertools.product(*[mirror(cds) for cds in gbk])
+		orderings = [ordering for product in products for ordering in itertools.permutations(product, len(product))]
+		
 		for ordering in orderings:
 			for (spectrum_name, spectrum) in zip(spectra_names, spectra_components):
-				new_score = simple_score()
-				best_score = max(best_score, (spectrum_name, gbk_name, new_score), key=lambda t: t[2])
+				new_score = simple_score(spectrum, list(itertools.chain.from_iterable(ordering)))
+				best_score = max(best_score, (spectrum_name + " " + str(spectrum), gbk_name + " " + str(ordering), new_score), key=lambda t: t[2])
 			
 	return best_score
