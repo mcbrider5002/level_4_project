@@ -1,3 +1,8 @@
+Full experiment refactored to accomodate randomisation of results with complex comparison, and shuffling implementation improved in clarity (and hopefully effectiveness).
+Should be simple to merge the mibig version in later.
+
+---
+
 Primitive (apparently) working implementation of complex comparison using stub scoring function.
 
 ---

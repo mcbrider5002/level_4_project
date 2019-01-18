@@ -40,3 +40,5 @@ AA_names = {
 				"Val" : "Val",
 				"Valine" : "Val"
 			}
+			
+AA_alphabet = set([value for key, value in AA_names.items()])

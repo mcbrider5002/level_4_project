@@ -20,51 +20,46 @@ def get_gbks(path=os.path.join(os.path.join(os.path.join(os.getcwd(), "genbank")
 	gbk_names = [gbk_name.strip() for gbk_name in gbk_dataset]
 	gbk_files = [parse_genbank(path, gbk_name) for gbk_name in gbk_names]
 	gbk_dataset.close()
-	return gbk_files, gbk_names
-
+	return gbk_files, gbk_names	
+	
 '''Shuffles the contents about between Genbank files and CDSes then compares the unique components of these random Genbank files to spectra as a baseline
-	for how well the actual comparison works. (We expect to lose a few components during this process because of filtering out non-unique components.)'''
-def match_shuffled(spectra_names, spectra_tags, cmpts_with_cds, headers, counts, iterations):
+	for how well the actual comparison works. (We expect to lose a few components during this process for component comparisons because of filtering out non-unique components.)'''
+def match_shuffled(spectra_names, spectra_tags, gbk_components, headers, counts, iterations, comparator):
 	for i in range(iterations):
-		#shuffle gbks components
-		for j in range(10000):
-			shuffled_gbks = compare.random_swap(cmpts_with_cds) #shuffle
-		#append counts for shuffled version
-		shuffled_components = [list(set(itertools.chain.from_iterable(gbk))) for gbk in shuffled_gbks]
-		counts.append(compare.compare_unique_components(spectra_names, spectra_tags, ["" for gbk in shuffled_components], shuffled_components))
+		shuffled_components = compare.shuffle_components(gbk_components)
+		counts.append(comparator(spectra_names, spectra_tags, ["" for gbk in shuffled_components], shuffled_components))
 		headers.append("Shuffled %d:" % i)
 
 '''Randomises the Genbank files then compares the unique components of these random Genbank files to spectra as a baseline
-	for how well the actual comparison works. (We expect to lose a few components during this process because of filtering out non-unique components.)'''
-def match_randomised(spectra_names, spectra_tags, gbk_components, headers, counts, iterations):
+	for how well the actual comparison works. (We expect to lose a few components during this process for component comparisons because of filtering out non-unique components.)'''
+def match_randomised(spectra_names, spectra_tags, gbk_components, headers, counts, iterations, comparator):
 	for i in range(iterations):
 		randomised_gbks = compare.randomise_components(gbk_components)
-		counts.append(compare.compare_unique_components(spectra_names, spectra_tags, ["" for gbk in randomised_gbks], randomised_gbks))
+		counts.append(comparator(spectra_names, spectra_tags, ["" for gbk in randomised_gbks], randomised_gbks))
 		headers.append("Randomised %d:" % i)
 			
-'''Given a list of tables in the format [[(total_correct, (max_spectrum, max_gbk, max_correct), comparisons, spectra_total, total_gbk_comps, total_gbk_files)]]
+'''Given a list of tables in the format [[(best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files)]]
 	prints this information out.'''
-def print_output(headers, counts, out):	
+def print_simple(headers, counts, out):	
 	print("---%s---\n" % out)
-	for header, (total_correct, (max_spectrum, max_gbk, max_correct), comparisons, spectra_total, total_gbk_comps, total_gbk_files) in zip(headers, counts):
+	for header, ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in zip(headers, counts):
 		print("%s\n Total Correct: %d\n" % (header, total_correct) +
-				"Max Spectrum: %s Max Gbk: %s Max Correct: %d\n" % (max_spectrum, max_gbk, max_correct) +
+				"Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score) +
 				"Comparisons: %d Spectra_Components: %d Gbk_Components: %d Gbk_Files: %d\n" % (comparisons, spectra_total, total_gbk_comps, total_gbk_files))
 
-def experiment():
+'''Given a list of tables in the format [[(best_spectrum, best_gbk, best_score)]], prints this information out.'''				
+def print_alignment(headers, counts, out):
+	print("---%s---\n" % out)
+	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
+		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
+
+def experiment(comparator, printer):
 
 	gbk_files, gbk_names = get_gbks()
-	
-	#gbks flattened out into lists of lists where inner lists represent files and in them is their unique components
-	gbk_components = [gbk.unique_components() for gbk in gbk_files]
-	gbk_components = [only_AAs(gbk) for gbk in gbk_components]
-	
-	#gbks flattened out into twice-nested lists where inner lists represent files, in them are their CDS and in them their unique components
-	cmpts_with_cds = [[cds.unique_components() for cds in gbk.predictions] for gbk in gbk_files] 
-	cmpts_with_cds = [[only_AAs(cds) for cds in gbk] for gbk in cmpts_with_cds]
-	
+
 	#gbks flattened out into twice-nested lists where inner lists represent files, in them are their CDS and in them their prediction's tag as a list of strings
-	gbks_with_cds = [gbk.decompose_tags() for gbk in gbk_files]
+	gbk_files = [gbk.decompose_tags() for gbk in gbk_files]
+	gbk_files = [[only_AAs(cds) for cds in gbk if cds] for gbk in gbk_files if gbk]
 	
 	msagg = mgfparser()[0][1] #extract the (presumed) only mgf, ignore the filename
 
@@ -84,31 +79,21 @@ def experiment():
 		
 		spectra_names = [str(spectrum.id) for spectrum in msagg.spectra]
 		msagg.filter_intensity_local(intensity_thresholds=[intensity_threshold*mint for mint in msagg.max_intensity_local()])
-		spectra_tags = msagg.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
-			
-		#convert spectra tags to their unique components
-		spectra_components = [tags.unique_components() for tags in spectra_tags if tags.unique_components() != []]
+		spectra = msagg.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
 		
-		#convert spectra tags into a list of their tied-longest tags
-		spectra_tags = [(tags.decompose_tags())[tags.longest_tag] for tags in spectra_tags if tags.decompose_tags() != {}]
-
-			
 		counts = []
-		'''counts.append(compare.compare_unique_components(spectra_names, spectra_tags, gbk_names, gbk_components))
+		counts.append(comparator(spectra_names, spectra, gbk_names, gbk_files))
 		headers = ["Original:"]
 		
-		match_shuffled(spectra_names, spectra_components, cmpts_with_cds, headers, counts, 5)
-		match_randomised(spectra_names, spectra_components, gbk_components, headers, counts, 5)'''
+		match_shuffled(spectra_names, spectra, gbk_files, headers, counts, 5, comparator)
+		match_randomised(spectra_names, spectra, gbk_files, headers, counts, 5, comparator)
 		
-		counts.append(compare.compare_alignment(spectra_names, spectra_tags, gbk_names, gbks_with_cds))
-		headers = ["Original:"]
-		
-		#print_output(headers, counts, out)
-		print("---%s---\n" % out)
-		for header, (max_spectrum, max_gbk, max_correct) in zip(headers, counts):
-			print("%s\n" % (header) + "Max Spectrum: %s Max Gbk: %s Max Correct: %d\n" % (max_spectrum, max_gbk, max_correct))'''
+		printer(headers, counts, out)
 
-experiment()
-'''s =	[["Ser", "Val", "Gly"]]
-g = [[["Ser", "Thy"], ["Val"], ["Ile", "Ile", "Ile"], ["Thy", "Gly"]]]
-print(compare.compare_alignment(str(s), s, str(g), g))'''
+def simple_experiment():
+	experiment(compare.compare_unique_components, print_simple)
+	
+def alignment_experiment():
+	experiment(compare.compare_alignment, print_alignment)
+
+simple_experiment()
