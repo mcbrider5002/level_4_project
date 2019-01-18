@@ -2,7 +2,7 @@ import itertools
 import copy
 import random
 import os
-import statistics
+from statistics import mean
 import numpy as np
 
 from genbank.aanames import AA_names, AA_alphabet

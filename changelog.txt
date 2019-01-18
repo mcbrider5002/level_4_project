@@ -1,3 +1,7 @@
+Tabular printing of simple experiment results.
+
+--
+
 Full experiment refactored to accomodate randomisation of results with complex comparison, and shuffling implementation improved in clarity (and hopefully effectiveness).
 Should be simple to merge the mibig version in later.
 

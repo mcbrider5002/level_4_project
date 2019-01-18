@@ -1,5 +1,6 @@
 import itertools
 import os
+from statistics import mean
 
 from spectra.mgfParser import load_files_from_dir as mgfparser
 from spectra.MassSpectrum import MassSpectrum
@@ -52,8 +53,36 @@ def print_alignment(headers, counts, out):
 	print("---%s---\n" % out)
 	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
 		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
+		
+def print_simple_table(shuffled_iters, random_iters, table_data):
 
-def experiment(comparator, printer):
+	for headerList, countList, out in table_data:
+	
+		print("---%s---\n" % out)
+		print("%-6s" % "" + "|%-45s |%-45s |%-45s" % ("Normal", "Shuffled", "Random"))
+		print("%-6s" % "" + "|%-14s |%-14s |%-14s" % ("Best Match", "Total Correct", "Comparisons") * 3)
+		print("-".join(["" for i in range(144)]))
+		
+		countList = [(best_score, total_correct, comparisons)
+						for ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in countList]
+		
+		actualComps = [countList[0]]
+		shuffledComps = countList[1:1+shuffled_iters]
+		randomComps = countList[1+shuffled_iters:]
+		
+		longest = max(1, max(shuffled_iters, random_iters))
+		stringFormat = lambda x: ["|%-14s |%-14s |%-14s" % (best, total, comparisons) for best, total, comparisons in x] \
+									+ ["|%-14s |%-14s |%-14s" % ("", "", "") for i in range(longest - len(x))]
+		
+		for index, actualString, shuffledString, randomString in zip(range(1, longest + 1), stringFormat(actualComps), stringFormat(shuffledComps), stringFormat(randomComps)):
+			print("%-6d%s%s%s" % (index, actualString, shuffledString, randomString))
+			
+		avgFormat = lambda x: "|%-14s |%-14s |%-14s" % (mean([y[0] for y in x]), mean([y[1] for y in x]), mean([y[2] for y in x]))
+		print("%-6s%s%s%s" % ("Avg.", avgFormat(actualComps), avgFormat(shuffledComps), avgFormat(randomComps)))
+		
+		print()
+
+def experiment(shuffled_iters, random_iters, comparator, printer, table_printer):
 
 	gbk_files, gbk_names = get_gbks()
 
@@ -75,6 +104,7 @@ def experiment(comparator, printer):
 	zipped = zip(mass_tolerance_modes, mass_thresholds, intensity_thresholds, outs)
 		
 	path = os.path.join("spectra", "spectraData")
+	table_data = []
 	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
 		
 		spectra_names = [str(spectrum.id) for spectrum in msagg.spectra]
@@ -85,15 +115,18 @@ def experiment(comparator, printer):
 		counts.append(comparator(spectra_names, spectra, gbk_names, gbk_files))
 		headers = ["Original:"]
 		
-		match_shuffled(spectra_names, spectra, gbk_files, headers, counts, 5, comparator)
-		match_randomised(spectra_names, spectra, gbk_files, headers, counts, 5, comparator)
+		match_shuffled(spectra_names, spectra, gbk_files, headers, counts, shuffled_iters, comparator)
+		match_randomised(spectra_names, spectra, gbk_files, headers, counts, random_iters, comparator)
 		
 		printer(headers, counts, out)
-
-def simple_experiment():
-	experiment(compare.compare_unique_components, print_simple)
+		table_data.append((headers, counts, out))
 	
-def alignment_experiment():
-	experiment(compare.compare_alignment, print_alignment)
+	table_printer(shuffled_iters, random_iters, table_data)
+
+def simple_experiment(shuffled_iters=5, random_iters=5):
+	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_simple_table)
+	
+def alignment_experiment(shuffled_iters=5, random_iters=5):
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, lambda *args: None)
 
 simple_experiment()
