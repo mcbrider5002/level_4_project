@@ -18,7 +18,7 @@ AA_names = {
 				"Ile" : "Ile/Leu",
 				"Isoleucine" : "Ile/Leu",
 				"Leu" : "Ile/Leu",
-				"Leucine" : "Leu",
+				"Leucine" : "Ile/Leu",
 				"Lys" : "Lys",
 				"Lysine" : "Lys",
 				"Met" : "Met",

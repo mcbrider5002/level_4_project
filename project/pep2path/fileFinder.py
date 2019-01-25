@@ -1,52 +1,10 @@
 from Bio import SeqIO
 import os
 from glob import glob
+from collections import Counter
+from genbank.aanames import AA_names
 
-'''Provides methods to select antiSMASH-generated Genbank files based on certain properties.
-	(Right now just generates list of all nrps files.)'''
-	
-AA_names = {	
-					"Ala" : "Ala",
-					"Alanine" : "Ala",
-					"Arg" : "Arg",
-					"Arginine" : "Arg",
-					"Asn" : "Asn",
-					"Asparagine" : "Asn",
-					"Asp" : "Asp",
-					"Aspartic Acid" : "Asp",
-					"Cys" : "Cys",
-					"Cysteine" : "Cys",
-					"Gln" : "Gln",
-					"Glutamine" : "Gln",
-					"Gly" : "Gly",
-					"Glycine" : "Gly",
-					"His" : "His",
-					"Histidine" : "His",
-					"Ile" : "Ile/Leu",
-					"Isoleucine" : "Ile/Leu",
-					"Leu" : "Ile/Leu",
-					"Leucine" : "Leu",
-					"Lys" : "Lys",
-					"Lysine" : "Lys",
-					"Met" : "Met",
-					"Methionine" : "Met",
-					"Phe" : "Phe",
-					"Phenylalanine" : "Phe",
-					"Pro" : "Pro",
-					"Proline" : "Pro",
-					"Ser" : "Ser",
-					"Serine": "Ser",
-					"Thr" : "Thr",
-					"Threonine" : "Thr",
-					"Sec" : "Sec",
-					"Selenocysteine" : "Sec",
-					"Trp" : "Trp",
-					"Tryptophan" : "Trp",
-					"Tyr" : "Tyr",
-					"Tyrosine" : "Tyr",
-					"Val" : "Val",
-					"Valine" : "Val"
-				}
+'''Provides methods to select antiSMASH-generated Genbank files based on certain properties.'''
 				
 '''Given a prediction as string, checks it isn't empty and only contains components from the keys of the given table of component names.'''
 def components_in_dict(pred, table):
@@ -59,9 +17,15 @@ def get_product_class(seq_rec):
 	products = [feature.qualifiers["product"][0] for feature in seq_rec.features if feature.type == "cluster"]
 	return "/".join(list(set(products)))
 	
-'''Checks all clusters have the product type nrps.'''
+'''Checks all clusters have the product type NRPS.'''
 def is_nrps(seq_rec):
-	return get_product_class(seq_rec) == "nrps"
+	return get_product_class(seq_rec).lower() == "nrps"
+
+'''Checks all clusters have the product type RiPP.'''	
+def is_ripp(seq_rec):
+	subclasses = ["ripp", "lanthipeptide", "bottromycin", "cyanobactin", "glycocin", "lassopeptide", "linaridin", "linearazol", 
+					"microcin", "sactipeptide", "thiopeptide", "auto_inducing_peptide", "comx", "bacterial_head_to_tail_cyclized"]
+	return get_product_class(seq_rec).lower() in subclasses 
 
 '''Given a SeqRecord object and a length n returns whether it contains predictions of total length greater than or equal to n.'''
 def has_long_predictions(seq_rec, n):
@@ -76,19 +40,30 @@ def has_one_cluster(seq_rec):
 def check_has_product(files):
 	return [(name, file) for name, file in files if any([feature.type == "cluster" and (not "product" in feature.qualifiers.keys()) for feature in file.features])]
 	
+'''Given a list of SeqRecord objects counts the unique combined product types for all clusters.'''
+def product_class_freqs(seq_recs):
+	return Counter([get_product_class(seq_rec) for seq_rec in seq_recs])	
+	
 def main():
 	path = os.path.join(os.path.join(os.getcwd(), "genbank"), "justin-20181022")
 	outpath = os.getcwd()
 	
 	names = [name for name in glob(os.path.join(path, "*.gbk")) if (not "final" in os.path.basename(name))]
-	names = [(os.path.basename(pattern), SeqIO.read(pattern, "genbank")) for pattern in names]
-
-	#find files with one cluster with class nrps and has predictions > length one
-	names = [(name, file) for name, file in names if (has_one_cluster(file) and is_nrps(file) and has_long_predictions(file, 3))]
+	gbks = [(os.path.basename(pattern), SeqIO.read(pattern, "genbank")) for pattern in names]
 	
-	out = open(os.path.join(outpath, "dataset.out"), 'w')
-	out.write("\n".join([name for name, file in names]))
-	out.close()
+	print("\n".join(sorted(["%s : %d" % (name, count) for name, count in product_class_freqs([gbk for name, gbk in gbks]).items()])))
+
+	#find files with one cluster with class NRPS and has predictions > length two
+	nrps_gbks = [(name, file) for name, file in gbks if (has_one_cluster(file) and is_nrps(file) and has_long_predictions(file, 3))]
+	
+	with open(os.path.join(outpath, "dataset.out"), 'w') as out:
+		out.write("\n".join([name for name, file in nrps_gbks]))
+	
+	#find files with one cluster with class RiPP and has predictions > length two
+	ripp_gbks = [(name, file) for name, file in gbks if (has_one_cluster(file) and is_ripp(file))]
+	
+	with open(os.path.join(outpath, "ripp_dataset.out"), 'w') as out:
+		out.write("\n".join([name for name, file in ripp_gbks]))
 	
 if __name__ == "__main__":
 
