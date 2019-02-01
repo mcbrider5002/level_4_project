@@ -54,15 +54,40 @@ def print_alignment(headers, counts, out):
 	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
 		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
 		
-def print_simple_table(shuffled_iters, random_iters, table_data):
+def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=14):
+
+	format_length = lambda l: "%-" + str(l) + "s"
+	column_no = len(column_headers)
+	group_no = len(group_headers)
+	most_samples = max([len(s_comp) for s_comp in split_comparisons])
+	
+	row_labels = format_length(label_width)
+	column_format = "|" + format_length(column_width)
+	group_format = "|" + format_length((1 + column_width) * column_no - 1)
+	total_length = label_width + ((1 + column_width) * column_no) * group_no
+
+	print("---%s---\n" % title)
+	print(row_labels % "" + "".join([group_format % string for string in group_headers]))
+	print(row_labels % "" + ("".join([(column_format % string) for string in column_headers]) * group_no))
+	print("-".join(["" for i in range(total_length)]))
+
+	stringFormat = lambda x: ["".join([column_format % column for column in row]) for row in x] \
+									+ ["".join([column_format % "" for j in range(column_no)]) for i in range(most_samples - len(x))] #pad blank rows
+									
+	for row in zip([row_labels % str(i) for i in range(1, most_samples + 1)], *[stringFormat(s_comp) for s_comp in split_comparisons]):
+		print("".join(row))
+		
+	print("-".join(["" for i in range(total_length)]))
+	
+	avgFormat = lambda x: "".join([column_format % mean([y[i] for y in x]) for i in range(column_no)])
+	print((row_labels % "Avg.") + "".join(["%s" % avgFormat(group) for group in split_comparisons]))
+	
+	print()
+		
+def print_simple_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
 
 	for headerList, countList, out in table_data:
 	
-		print("---%s---\n" % out)
-		print("%-6s" % "" + "|%-45s |%-45s |%-45s" % ("Normal", "Shuffled", "Random"))
-		print("%-6s" % "" + "|%-14s |%-14s |%-14s" % ("Best Match", "Total Correct", "Comparisons") * 3)
-		print("-".join(["" for i in range(144)]))
-		
 		countList = [(best_score, total_correct, comparisons)
 						for ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in countList]
 		
@@ -70,17 +95,27 @@ def print_simple_table(shuffled_iters, random_iters, table_data):
 		shuffledComps = countList[1:1+shuffled_iters]
 		randomComps = countList[1+shuffled_iters:]
 		
-		longest = max(1, max(shuffled_iters, random_iters))
-		stringFormat = lambda x: ["|%-14s |%-14s |%-14s" % (best, total, comparisons) for best, total, comparisons in x] \
-									+ ["|%-14s |%-14s |%-14s" % ("", "", "") for i in range(longest - len(x))]
+		print_table(out, ("Normal", "Shuffled", "Random"), 
+						 ("Best Match", "Total Correct", "Comparisons"),
+						 [actualComps, shuffledComps, randomComps], 
+						 label_width=label_width, 
+						 column_width=column_width)
 		
-		for index, actualString, shuffledString, randomString in zip(range(1, longest + 1), stringFormat(actualComps), stringFormat(shuffledComps), stringFormat(randomComps)):
-			print("%-6d%s%s%s" % (index, actualString, shuffledString, randomString))
-			
-		avgFormat = lambda x: "|%-14s |%-14s |%-14s" % (mean([y[0] for y in x]), mean([y[1] for y in x]), mean([y[2] for y in x]))
-		print("%-6s%s%s%s" % ("Avg.", avgFormat(actualComps), avgFormat(shuffledComps), avgFormat(randomComps)))
+def print_complex_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+	
+	for headerList, countList, out in table_data:
+	
+		countList = [(best_score,) for (best_spectrum, best_gbk, best_score) in countList]
 		
-		print()
+		actualComps = [countList[0]]
+		shuffledComps = countList[1:1+shuffled_iters]
+		randomComps = countList[1+shuffled_iters:]
+		
+		print_table(out, ("Normal", "Shuffled", "Random"), 
+						 ("Best Score",),
+						 [actualComps, shuffledComps, randomComps], 
+						 label_width=label_width, 
+						 column_width=column_width)
 
 def experiment(shuffled_iters, random_iters, comparator, printer, table_printer):
 
@@ -98,6 +133,7 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 							
 	mass_thresholds = [0.01, 0.001, 0.00001] *2
 	intensity_thresholds = [0.05, 0.005] *3
+	intensity_thresholds = [0.05]
 
 	outs = ["matching_0.01Mass_0.05Inten", "matching_0.001Mass_0.005Inten", "matching_0.00001ppmMass_0.05Inten", 
 												"matching_0.01Mass_0.005Inten", "matching_0.001Mass_0.05Inten"]
@@ -124,9 +160,9 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 	table_printer(shuffled_iters, random_iters, table_data)
 
 def simple_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_simple_table)
+	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_simple_tables)
 	
 def alignment_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, lambda *args: None)
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_complex_tables)
 
-simple_experiment()
+alignment_experiment()

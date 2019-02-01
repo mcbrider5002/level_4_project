@@ -1,3 +1,7 @@
+Table printing generalised a little so we can now print out different results easily.
+
+---
+
 Tabular printing of simple experiment results.
 
 --
