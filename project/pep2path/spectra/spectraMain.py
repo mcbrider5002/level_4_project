@@ -139,7 +139,7 @@ def write_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), patt
 '''Helper to take the mibig file and automatically write the contents of corresponding files to tags.out.'''	
 def mibig_parser(inpath=os.path.join(os.path.dirname(__file__), "spectraData")):
 
-	file = open("mibig_gnps_links_q3.csv", 'r')
+	file = open(os.path.join(os.path.dirname(__file__), "mibig_gnps_links_q3.csv"), 'r')
 	filenames = [line.split(',')[1] + ".ms" for line in file]
 	file.close()
 	
