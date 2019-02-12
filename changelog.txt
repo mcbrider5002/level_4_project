@@ -1,3 +1,7 @@
+CLI skeleton added, to make things a little tidier.
+
+---
+
 Full implementation of NRPS2Path giving a result that seems vaguely correct on a toy example!
 	- However, it is enormously slow (taking ten seconds on just the toy example)...
 	- It still needs to be subject to more stringent correctness procedures (unit tests).
