@@ -1,3 +1,16 @@
+Full implementation of NRPS2Path giving a result that seems vaguely correct on a toy example!
+	- However, it is enormously slow (taking ten seconds on just the toy example)...
+	- It still needs to be subject to more stringent correctness procedures (unit tests).
+	
+Mild changes to FileFinder.py so that it prints out product classes and can identify anything with a LANC-like domain.
+	- This is a useful distinction for lanthipeptides, which RiPPQuest presents a method for translating.
+	
+Kersten et al. mass table added (the actual data is not included within the repository for now).
+
+Original Pep2Path's NRP_aa.txt added... We might use this to calculate P(A).
+
+---
+
 Table printing generalised a little so we can now print out different results easily.
 
 ---

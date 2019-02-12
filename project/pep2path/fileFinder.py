@@ -23,7 +23,7 @@ def is_nrps(seq_rec):
 
 '''Checks all clusters have the product type RiPP.'''	
 def is_ripp(seq_rec):
-	subclasses = ["ripp", "lanthipeptide", "bottromycin", "cyanobactin", "glycocin", "lassopeptide", "linaridin", "linearazol", 
+	subclasses = ["ripp", "lantipeptide", "bottromycin", "cyanobactin", "glycocin", "lassopeptide", "linaridin", "linearazol", 
 					"microcin", "sactipeptide", "thiopeptide", "auto_inducing_peptide", "comx", "bacterial_head_to_tail_cyclized"]
 	return get_product_class(seq_rec).lower() in subclasses 
 
@@ -37,12 +37,16 @@ def has_one_cluster(seq_rec):
 	return len([feature for feature in seq_rec.features if feature.type == "cluster"]) == 1
 	
 '''Given a list of filenames and SeqRecords in the format (name, record), returns any that have a cluster feature without the 'product' qualifier.'''
-def check_has_product(files):
+def has_no_product(files):
 	return [(name, file) for name, file in files if any([feature.type == "cluster" and (not "product" in feature.qualifiers.keys()) for feature in file.features])]
 	
 '''Given a list of SeqRecord objects counts the unique combined product types for all clusters.'''
 def product_class_freqs(seq_recs):
 	return Counter([get_product_class(seq_rec) for seq_rec in seq_recs])	
+	
+'''Given a SeqRecord object returns whether it has a lanc_like pfam domain.'''	
+def has_lanclike(seq_rec):
+	return any(["lanc_like" in map(lambda x: x.lower(), feature.qualifiers.get("domain", [])) for feature in seq_rec.features])
 	
 def main():
 	path = os.path.join(os.path.join(os.getcwd(), "genbank"), "justin-20181022")
@@ -59,11 +63,11 @@ def main():
 	with open(os.path.join(outpath, "dataset.out"), 'w') as out:
 		out.write("\n".join([name for name, file in nrps_gbks]))
 	
-	#find files with one cluster with class RiPP and has predictions > length two
-	ripp_gbks = [(name, file) for name, file in gbks if (has_one_cluster(file) and is_ripp(file))]
+	#find files with one cluster with class RiPP
+	ripp_gbks = [(name, file) for name, file in gbks if (has_one_cluster(file) and is_ripp(file) and has_lanclike(file))]
 	
 	with open(os.path.join(outpath, "ripp_dataset.out"), 'w') as out:
-		out.write("\n".join([name for name, file in ripp_gbks]))
+		out.write("\n".join([name + " " + str(get_product_class(file)) for name, file in ripp_gbks]))
 	
 if __name__ == "__main__":
 

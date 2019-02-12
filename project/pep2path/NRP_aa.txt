@@ -1,0 +1,381 @@
+43	Ethanolamine	Eta	Eta	xxx
+57	glycine	Gly	Gly	gly
+67	pyrrolidone	Pyr	Pyr	xxx
+69	dehydroalanine	dh-Ala	Dha or Ser	ser
+70	pyruvate	Pya	Pya	xxx
+70	putrescine	Put	Put	xxx
+71	alanine	Ala	Ala	ala
+71	beta-Alanine	b-Ala	b-Ala	b-ala
+71	N-Methyl-Glycine	NMe-Gly	Gly	gly
+72	D-lactic acid	D-Lac	D-Lac	xxx
+72	Lactic acid	Lac	Lac	xxx
+73	Serinol	Serol	Ser	ser
+83	2,3-dehydro-2-aminobutyric acid	dhAbu	Thr or Dhb	thr
+83	2,3-dehydro-2-aminobutyric acid	dhAbu	Thr or Dhb	dhb
+83	hydroxy pyrrolidone	OH-Pyr	OH-Pyr	xxx
+83	homoserine lactone	HseL	HseL or Hse	xxx
+83	N-Methyl-dehydroalanine	NMe-Dha	Ser or Dha	ser
+85	alpha-formylGlycine	aFo-Gly	aFo-Gly	xxx
+85	2-Aminoisobutyric acid	Aib	Aib	xxx
+85	D-3-methoxyalanine	D-3OMe-Ala	3OMe-Ala or Ser	ser
+85	N-Methyl-Alanine	NMe-Ala	Ala	ala
+85	N-methyl-beta-alanine	NMe-bAla	bAla (Ala-b)	b-ala
+85	D-2-Aminobutyric acid	D-Abu	Abu	abu
+85	2-Aminobutyric acid	Abu	Abu	abu
+85	isovalinol	Ivalol	Ival	iva
+85	valinol	Valol	Val	val
+86	2,3-Diaminopropionic acid	Dpr	Dpr	xxx
+87	Serine	Ser	Ser	ser
+87	D-Serine	D-Ser	Ser	ser
+87	isoserine	Iser	Iser	xxx
+96	proline carboxamid	ProC	Pro or ProC	pro
+97	Proline	Pro	Pro	pro
+97	norcoronamic acid	norCMA	Val	val
+97	2-methylamino-2-dehydrobutyric acid	2Dh-Mabu	Thr	thr
+97	D-Proline	D-Pro	Pro	pro
+98	3-methylvaleric acid	Me-Vaa	Me-Vaa	xxx
+99	Valine	Val	Val	val
+99	N-formyl-Alanine	NFo-Ala	Ala	ala
+99	D-N-formyl-Alanine	D-NFo-Ala	Ala	ala
+99	N-dimethyl-Alanine	NdMe-Ala	Ala	ala
+99	Norvaline	Nva	Nva	xxx
+99	D-Norvaline	D-Nva	Nva	xxx
+99	D-Valine	D-Val	Val	val
+99	D-isovaline	D-Ival	Ival	iva
+99	isovaline	Ival	Ival	iva
+99	2-methyl-3-aminobutanoic acid	Mab	Mab	xxx
+99	Isoleucinol	Ileol	Ile	ile
+99	Leucinol	Leuol	Leu	leu
+100	2-hydroxyisovalerate	Hiv	Hiv	hyv
+100	D-2-hydroxyisovalerate	D-Hiv	D-Hiv	hyv
+100	2,4-diaminobutyric acid	Dab	Dab	dab
+100	D-2,4-diaminobutyric acid	D-Dab	D-Dab	dab
+100	(2S)-2,3-diaminobutyric acid	Dbu	Dbu	xxx
+100	(2R,3R)-2,3-diaminobutyric acid	D-Dbu	Dbu	xxx
+100	(2S,3S)-2,3-diaminobutyric acid	L-Dbu	Dbu	xxx
+101	Threonine	Thr	Thr	thr
+101	4-amino-3-hydroxybutyric acid	OH-4Abu	OH-4Abu	xxx
+101	D-Threonine	D-Thr	Thr	thr
+101	allo-Threonine	aThr	aThr	allothr
+101	D-allo-Threonine	D-aThr	aThr	allothr
+101	Homoserine	Hse	Hse	xxx
+101	D-Homoserine	D-Hse	Hse	xxx
+101	N-Methyl-D-Serine	D-NMe-Ser	Ser	ser
+101	N-Methyl-Serine	NMe-Ser	Ser	ser
+101	dehydro-cysteine	dhCys	Cys	cys
+103	Cysteine	Cys	Cys	cys
+103	D-Cysteine	D-Cys	Cys	cys
+104	benzoic acid	Bz	Bz	xxx
+110	N-methylglutamine	NMe-Gln	Gln 	gln
+110	N-Methyl-Glycine-thiazole	NMe-Gly-Thz	Gly-Cys	gly cys
+111	pyroglutamic acid	pGlu	Glu	glu
+111	4-oxo-proline	4oxo-Pro	Pro or 4oxo-Pro	pro
+111	coronamic acid	CMA	aIle	xxx
+111	homoproline	Hpr	Hpr	pip
+111	D-homoproline	D-Hpr	Hpr	pip
+111	3-methylproline	3Me-Pro	Pro or 3Me-Pro	pro
+111	4-methylproline	4Me-Pro	Pro or 4Me-Pro	pro
+111	5-methylproline	5Me-Pro	Pro or 5Me-Pro	pro
+112	keto-Leucine	k-Leu	Leu or k-Leu	leu
+112	Hydroxy-cycloOrnithine	OH-cOrn	OH-cOrn	xxx
+112	D-Hydroxy-cycloOrnithine	D-OH-cOrn	OH-cOrn	xxx
+113	aziridine dicarboxylic acid	Azd	Azd	xxx
+113	N-formyl-D-aminobyric acid	NFo-D-Abu	Abu	abu
+113	4-Hydroxyproline	4OH-Pro	4OH-Pro	xxx
+113	D-hydroxyproline	D-4OH-Pro	Pro or 4OH-Pro	pro
+113	3-Hydroxyproline	3OH-Pro	Pro or 3OH-Pro	pro
+113	Isoleucine	Ile	Ile	ile
+113	D-Isoleucine	D-Ile	Ile	ile
+113	allo-Isoleucine	aIle	aIle	ile
+113	D-allo-Isoleucine	D-aIle	aIle	ile
+113	D-tert-Leu	D-t-Leu	t-Leu	xxx
+113	tert-Leu	t-Leu	t-Leu	xxx
+113	D-Leucine	D-Leu	Leu	leu
+113	D-N-methyl-norvaline	D-NMe-Nva	Nva	xxx
+113	D-N-Methylvaline	D-NMe-Val	Val	val
+113	N-Methyl-Valine	NMe-Val	Val	val
+113	2-methyl-3-aminopentanoic acid	Map	Map	xxx
+113	norspermidine	NSpd	NSpd	xxx
+114	hydroxyacetyl propionyl	Hap	Hap	xxx
+114	pentanedioic acid	Pda	Pda	xxx
+114	Asparagine	Asn	Asn	asn
+114	D-Asparagine	D-Asn	Asn	asn
+114	N1-formyl-2,3-Diaminopropionic acid	NFo-Dpr	Dpr or NFo-Dpr	xxx
+114	2-hydroxy-3-methyl-pentanoic acid	Hmp	Hmp	xxx
+114	D-2-hydroxy-3-methylpentanoic acid	D-Hmp	D-Hmp	xxx
+114	4-Methyl-D-2-hydroxy-valeric acid	4Me-D-Hva	4Me-Hva	xxx
+114	D-ornithine	D-Orn	Orn	orn
+114	Ornithine	Orn	Orn	orn
+115	Aspartic acid	Asp	Asp	asp
+115	D-aspartic acid	D-Asp	Asp	asp
+115	N-formyl-isoserine	NFo-Iser	Iser	xxx
+115	D-beta-hydroxyvaline	D-bOH-Val	Val or bOH-Val	val
+115	beta-hydroxyvaline	bOH-Val	Val or bOH-Val	val
+115	O-methyl-threonine	OMe-Thr	Thr or OMe-Thr	thr
+115	N-methylthreonine	NMe-Thr	Thr	thr
+117	4-Hydroxythreonine	4OH-Thr	Thr or 4OH-Thr	thr
+117	alpha-methylcysteine	aMe-Cys	aMe-Cys	xxx
+117	N-methylcysteine	NMe-Cys	Cys	cys
+118	phenylacetic acid	Pha	Pha	xxx
+120	para-hydroxy-benzoic acid	pOH-Bz	pOH-Bz (Sal)	sal
+121	hydroxypicolinic acid	Hpa	Hpa	xxx
+125	4-oxo-homoproline	4oxo-Hpr	4oxo-Hpr	xxx
+125	N-Formyl-Proline	NFo-Pro	Pro	pro
+125	4-oxo-5-methylproline	4oxo-5Me-Pro	Pro or 5Me-Pro	pro
+127	beta-ureido-dehydroAlanine	bU-Ala	Dpr	xxx
+127	N-Acetyl-2-aminoisobutyric acid	Ac-Aib	Aib	xxx
+127	N-formyl-Valine	NFo-Val	Val	val
+127	3-Hydroxy-5-methylproline	3OH-5Me-Pro	Pro or 3OH-5Me-Pro	pro
+127	homoisoleucine	Hil	Hil	xxx
+127	D-N-methyl-alloisoleucine	D-NMe-aIle	aIle	xxx
+127	N-Methyl-Isoleucine	NMe-Ile	Ile	ile
+127	beta-methylisoleucine	bMe-Ile	Ile or bMe-Ile	ile
+127	N-methyl-alloIsoleucine	NMe-aIle	aIle	xxx
+127	D-N-methyl-Leucine	D-NMe-Leu	Leu	leu
+127	N-Methyl-Leucine	NMe-Leu	Leu	leu
+127	alpha-ethylnorvaline	Et-Nva	Et-Nva	xxx
+127	Dolavaline	Dov	Val	val
+127	spermidine	Spd	Spd	xxx
+128	D-N2-methyl-asparagine	D-N2Me-Asn	N2Me-Asn	xxx
+128	beta-methyl-asparagine	bMe-Asn	bMe-Asn	xxx
+128	N-methylasparagine	NMe-Asn	Asn	asn
+128	N1-acetyl-2,3-Diaminopropionic acid	NAc-Dpr	Dpr or NAc-Dpr	xxx
+128	Glutamine	Gln	Gln	gln
+128	D-Glutamine	D-Gln	Gln	gln
+128	Lysine	Lys	Lys	lys
+128	D-Lysine	D-Lys	Lys	lys
+128	beta lysine	bLys	bLys	lys
+128	N-Hydroxy-histamine	N-OH-Hta	N-OH-Hta	xxx
+129	D-beta-methyl-aspartic acid	D-bMe-Asp	bMe-Asp	xxx
+129	beta-methyl-aspartic acid	bMe-Asp	bMe-Asp	xxx
+129	beta-methoxy-aspartic acid	bOMe-Asp	bOMe-Asp	xxx
+129	Glutamic Acid	Glu	Glu	glu
+129	D-Glutamic Acid	D-Glu	Glu	glu
+129	O-acetyl-Serine	Ac-Ser	Ser or Ac-Ser	ser
+129	L-acosamine	Aco		xxx
+129	L-ristosamine	Ria		xxx
+129	3-hydroxyleucine	3OH-Leu	Leu or 3OH-Leu	leu
+129	gama-hydroxy-N-Methyl-Valine	gOH-NMe-Val	Val or gOH-Val	val
+129	beta-hydroxy-N-Methyl-Valine	bOH-NMe-Val	Val or bOH-Val	val
+130	Hydroxyasparagine	OH-Asn	OH-Asn	asn
+130	D-HydroxyAsparagine	D-OH-Asn	OH-Asn	asn
+130	alpha-guanidino Serine	gSer	gSer	xxx
+130	hydroxy-beta lysine	OH-bLys	bLys	lys
+130	N5-hydroxy ornithine	OH-Orn	OH-Orn	orn
+130	D-N5-HydroxyOrnithine	D-OH-Orn	OH-Orn	orn
+131	Methionine	Met	Met	met
+131	Hydroxyaspartic acid	OH-Asp	OH-Asp	xxx
+131	D-Hydroxyaspartic acid	D-OH-Asp	D-OH-Asp	xxx
+131	N,S-dimethylcysteine	diMe-Cys	Cys	cys
+132	D-arabinose	D-Ara		xxx
+132	Arabinose	Ara		xxx
+132	lyxose	Lyx		xxx
+132	L-Olivose	Oli		xxx
+133	D-PhenylGlycine	D-ph-Gly	Ph-Gly	phg
+133	phenylglycine	Ph-Gly	Ph-Gly	phg
+133	phenylalaninol	Pheol	Phe	phe
+136	4-Chloro-Threonine	4Cl-Thr	Thr	thr
+136	2,3-dihydroxybenzoic acid	diOH-Bz	diOH-Bz	dhb
+137	Histidine	His	His	his
+138	dehydropyrrolidone	dPyr	dPyr	xxx
+139	2,3-dimethylpyroglutamic acid	2Me-3Me-pGlu	Glu or 2Me-3Me-Glu	glu
+140	arginal	Argal	Arg	arg
+141	4-oxovancosamine	4oxo-Van		xxx
+141	N-formyl-Isoleucine	NFo-Ile	Ile	ile
+141	N-formyl-Leucine	NFo-Leu	Leu	leu
+141	N-acetyl-isovaline	Ac-Ival	Ival	iva
+141	N-Acetylvaline	Ac-Val	Val	val
+141	4-amino-2,2-dimethyl-3-oxopentanoic acid	Ibu	Ibu	xxx
+141	N,O-dimethyl-isoleucine	NMe-OMe-Ile	Ile or OMe-Ile	ile
+141	O-acetyl-leucinol	OAc-Leuol	Leu	leu
+141	N,beta-dimethylLeucine	NMe-bMe-Leu	bMe-Leu	xxx
+141	N,gamma-alloisoleucine	diMe-aIle	aIle or Me-aIle	ile
+142	N-methylchloropyrrole	MCP	N-methylpyrrole-2-carboxylic acid	xxx
+142	D-beta-methylglutamine	D-bMe-Gln	Gln or bMe-Gln	gln
+142	beta-methylglutamine	bMe-Gln	Gln or bMe-Gln	gln
+143	2-Aminoadipic acid	Aad	Aad	aad
+143	Glutamic Acid methyl ester	MeO-Glu	Glu or MeO-Glu	glu
+143	D-Glutamic Acid methyl ester	D-MeO-Glu	Glu or MeO-Glu	glu
+143	D-Glutamic Acid methyl ester	MeO-D-Glu	Glu or MeO-Glu	glu
+143	3-Methyl-Glutamic acid	3Me-Glu	3Me-Glu	glu
+143	L-actinosamine	Act		xxx
+143	L-eremosamine	Ere		xxx
+143	N-methyl-hydroxyisoleucine	NMe-OH-Ile	Ile or OH-Ile	ile
+143	norstatine	Nst	Nst	xxx
+144	D-beta-hydroxy-N2-methyl-asparagine	D-N2Me-bOH-Asn	N2Me-bOH-Asn	asn
+144	beta-hydroxyglutamine	bOH-Gln	bOH-Gln	xxx
+145	methoxyaspartic acid	OMe-Asp	OMe-Asp	xxx
+146	L-rhamnose	Rha		xxx
+147	N-methyl-phenylglycine	NMe-Ph-Gly	Ph-Gly	phg
+147	beta phenylalanine	bPhe	bPhe	xxx
+147	Phenylalanine	Phe	Phe	phe
+147	D-Phenylalanine	D-Phe	Phe	phe
+147	D-beta-phenylalanine	D-bPhe	bPhe	xxx
+147	Methionine-S-oxide	O-Met	Met or O-Met	met
+148	Chloro-Isoleucine	Cl-Ile	Ile or Cl-Ile	ile
+148	2-hydroxyphenyl-2-oxo-ethanoic acid	Hpoe	Hpoe	xxx
+148	D-Phenyl-lactate	D-Ph-Lac	D-Ph-Lac	xxx
+148	Phenyl-lactate	Ph-Lac	Ph-Lac	xxx
+149	D-HydroxyPhenylGlycine	D-Hpg	Hpg	hpg
+149	HydroxyPhenylGlycine	Hpg	Hpg	hpg
+151	D-4-fluoroPhenylGlycine	D-F-ph-Gly	D-F-ph-Gly	xxx
+151	cysteic acid	CysA	Cys or CysA	cys
+151	D-cysteic acid	D-CysA	Cys or CysA	cys
+153	Hydroxyhistidine	OH-His	His (bOH-His) or OH-His	his
+153	N-methyl homo vinylogous Valine	NMe-hv-Val	hv-Val	xxx
+154	capreomycidine	Cap	Cap	xxx
+154	enduracididine	End	End	xxx
+154	D-enduracididine	D-End	End	xxx
+154	Alanine-thiazole	Ala-Thz	Ala-Cys	ala cys
+155	O-desmethyldolaproine	dDap	dDap	xxx
+155	N-acetyl-Leucine	NAc-Leu	Leu	leu
+155	methyl-2-aminooctanoic acid	Me-AOA	Me-AOA	xxx
+156	Arginine	Arg	Arg	arg
+156	N-formyl-Glutamine	NFo-Gln	Gln	gln
+156	2-carboxyquinoxaline	COOH-Qui	COOH-Qui	xxx
+156	hydroxyisovalerylpropionyl	Hip	Hip	xxx
+156	3,4-dimethylglutamine	3Me-4Me-Gln	Gln or 3Me-4Me-Gln	gln
+156	N-trimethyl-leucine	NtMe-Leu	Leu	leu
+156	N-dimethyl-leucine	NdMe-Leu	Leu	leu
+157	D-Citrulline	D-Cit	citrulline	xxx
+157	Citrulline	Cit	citrulline	xxx
+157	D-Arginine	D-Arg	Arg	arg
+157	isostatine	Ist	Ist	xxx
+157	statine	Sta	Sta	xxx
+158	N6-formyl-HydroxyOrnithine	Fo-OH-Orn	Fo-OH-Orn	orn
+158	D-formyl-hydroxyOrnithine	D-Fo-OH-Orn	Fo-OH-Orn	orn
+159	alpha-amino-hydroxyadipic acid	Ahad	Aad or Ahad	aad
+159	N-methyl-2,3-dehydrophenylalanine	NMe-dPhe	Phe	phe
+160	O-methyl-L-rhamnose	2OMe-Rha		xxx
+161	D-N-Methyl-Phenylalanine	D-NMe-Phe	Phe	phe
+161	3-methylphenylalanine	3Me-Phe	Phe or 3Me-Phe	phe
+161	N-Methyl-Phenylalanine	NMe-Phe	Phe	phe
+161	Homophenylalanine	Hph	Hph	xxx
+162	D-mannose	D-Man		xxx
+162	beta-D-galactose	bD-Gal		xxx
+162	D-galactose	D-Gal		xxx
+162	D-Glucose	D-Glc		xxx
+162	L-Glucose	Glc		xxx
+163	phosphinothricin	PT	AcDMPT	xxx
+163	N-hydroxy-dehydro-HydroxyPhenylGlycine	OH-dHpg	Hpg	hpg
+163	D-N-hydroxy-dehydro-HydroxyPhenylGlycine	D-OH-dHpg	Hpg	hpg
+163	N-methyl-HydroxyPhenylGlycine	NMe-Hpg	Hpg	hpg
+163	phenylserine	Ph-Ser	Ph-Ser	xxx
+163	Tyrosine	Tyr	Tyr	tyr
+163	D-Tyrosine	D-Tyr	Tyr	tyr
+163	beta-tyrosine	bTyr	bTyr	xxx
+163	Methionine sulfone	O2-Met	Met or O2-Met	met
+164	4-hydroxy-D-phenyl-lactate	4OH-D-Ph-Lac	4OH-D-Ph-Lac	xxx
+164	propenoyl-alanyloxazole acid	PALOA	Ala-v-Ser	ala
+165	D-3,5-dihydroxyphenylglycine	D-Dhpg	Dhpg	dhpg
+165	3,5-dihydroxyphenylglycine	Dhpg	Dhpg	dhpg
+166	3,4-dichloro-proline	Cl2-Pro	Pro or Cl2-Pro	pro
+166	cyclo alpha-ketoarginine	ck-Arg	ck-Arg	xxx
+167	2-carboxy-6-hydroxyoctahydroindole	Choi	Choi	xxx
+167	3-Desoxy-Methyl-4-butenyl-4-methyl threonine	3d-NMe-Bmt	3d-Bmt	xxx
+168	1-methoxy-beta-alanine-thiazole	OMe-bAla-Thz	bAla-Cys	b-ala cys
+169	4-butenyl-4-methyl threonine	Bmt	Bmt	bmt
+169	Dolaproine	Dap	Dap	xxx
+169	guanylspermidine	GSpd	GSpd	xxx
+170	5-hydroxy-capreomycidine	5OH-Cap	Cap	xxx
+170	hydroxysecbutyl acetyl propionyl	Hysp	Hysp	xxx
+170	homoarginine	Har	Har	xxx
+171	N-methoxyacetyl-valine	NOMe-Ac-Val	Val	val
+171	N-desmethyldolaisoleuine	dDil	dDil or Dil	xxx
+172	N-acetyl-HydroxyOrnithine	Ac-OH-Orn	Ac-OH-Orn	orn
+172	D-N-acetyl-HydroxyOrnithine	D-Ac-OH-Orn	Ac-OH-Orn	orn
+172	tryptophanol	Trpol	Trp	trp
+175	alpha-amino-phenyl-valeric acid	Apv	Apv	xxx
+175	beta,beta-dimethyl-Methionine-S-oxide	bbMe2-O-Met	bbMe2-O-Met or bbMe2-Met	xxx
+176	N-methyldichloropyrrole-2-carboxylic acid	MdCP	N-methylpyrrole-2-carboxylic acid	xxx
+177	beta-hydroxy-N-Methyl-Phenylalanine	bOH-NMe-Phe	Phe or bOH-Phe	phe
+177	Homotyrosine	Hty	Hty	hty
+177	N-methyltyrosine	NMe-Tyr	Tyr	tyr
+178	propenoyl-2-aminobutanoyloxazole acid	PAOA	Abu-v-Ser	abu
+179	3,4-dihydroxyphenylalanine	diOH-Phe	Tyr or diOH-Phe	tyr
+179	beta-hydroxy-tyrosine	bOH-Tyr	bOH-Tyr	bht
+181	Anticapsin	Aca	Aca	xxx
+182	D-homoarginine	D-Har	Har	xxx
+182	vinylogous arginine	v-Arg	Arg or v-Arg	arg
+183	N-methyl-4-butenyl-4-methyl threonine	NMe-Bmt	Bmt	bmt
+184	3-chloro-4-hydroxyphenylglycine	Cl-Hpg	Hpg	hpg
+184	2,3-Dehydro-Tryptophan	dh-Trp	Trp	trp
+184	alpha-ketoarginine	k-Arg	k-Arg	xxx
+185	Dolapyrrolidone	Dpy	Dpy	xxx
+185	Dolaisoleucine	Dil	Dil	xxx
+186	Tryptophan	Trp	Trp	trp
+186	D-Tryptophan	D-Trp	Trp	trp
+186	hydrated alpha-ketoarginine	hk-Arg	hk-Arg	xxx
+186	Dolaphenine	Doe	Phe-Cys	phe cys
+187	dehydro vinylogous tyrosine	dv-Tyr	Tyr or dv-Tyr	tyr
+188	3,4-dihydroxyArginine	diOH-Arg	Arg or diOH-Arg	arg
+189	N-acetylphenylalanine	Ac-Phe	Phe	phe
+189	vinylogous tyrosine	v-Tyr	v-Tyr	xxx
+190	D-kynurenine	D-Kyn	Kyn	xxx
+190	kynurenine	Kyn	Kyn	xxx
+190	N-methyl-4-methylamino-phenylalanine	NMe-MeA-Phe	MeA-Phe	xxx
+190	N,O-dimethyl-tyrosinecarboxamid	NMe-OMe-TyrC	OMe-TyrC 	xxx
+191	alpha-amino-hydroxyphenyl-valeric acid	Ahv	Ahz	xxx
+191	N-methyl-homotyrosine	NMe-Hty	Hty	hty
+191	3-methyl-homotyrosine	3Me-Hty	Hty or 3Me-Hty	hty
+191	D-N,O-dimethyl-tyrosine	D-NMe-OMe-Tyr	Tyr or OMe-Tyr	tyr
+191	N,O-dimethyl-tyrosine	NMe-OMe-Tyr	Tyr or OMe-Tyr	tyr
+193	beta-methoxy-tyrosine	bOMe-Tyr	Tyr, bOH-Tyr or bOMe-Tyr	tyr
+194	di-chloro-N-methyl-dehydroLeucine	Cl2-NMe-dhLeu	Leu or dhLeu	leu
+194	O-sulfate-2-hydroxy-3-methylpentanoic acid	OSu-Hmp	Hmp or OSu-Hmp	xxx
+194	methyloxazoline-isoleucine	MeOx-Ile	Thr-Ile	thr ile
+196	di-chloro-N-methyl-Leucine	Cl2-NMe-Leu	Leu	leu
+197	4-butenyl-4-methyl-N,4-methyl threonine	Me2-Bmt	Me2-Bmt or Bmt	bmt
+198	chloro-tyrosine	Cl-Tyr	Tyr or Cl-Tyr	tyr
+200	N-acetyl-N6-formyl-N6-hydroxyOrnithine	NAc-Fo-OH-Orn	NAc-Fo-OH-Orn	xxx
+200	N1-methyl-tryptophan	1Me-Trp	Trp or 1Me-Trp	trp
+202	phototryptophan	pTrp	pTrp	xxx
+202	5-hydroxytryptophan	OH-Trp	Trp or OH-Trp	trp
+204	N-methyl-4-dimethylamino-phenylalanine	NMe-Me2A-Phe	Me2A-Phe	xxx
+205	vinylogous hydroxy tyrosine	v-OH-Tyr	v-OH-Tyr	xxx
+205	alpha-amino-methoxyphenyl-valeric acid	Amv	Amv	xxx
+208	3-nitrotyrosine	3NO2-Tyr	Tyr	tyr
+210	D-PhosphateAsparagine	D-PO-Asn	PO-Asn or OH-Asn	asn
+210	propenoyl-O-methylserinylthiazole acid	PMST	MeO-Ser-v-Cys	xxx
+212	D-3-chloro-N-methyl-Tyrosine	D-Cl-NMe-Tyr	Tyr or Cl-Tyr	tyr
+212	Chloro-N-methyl-tyrosine	Cl-NMe-Tyr	Tyr or Cl-Tyr	tyr
+214	beta-hydroxy-chloro-tyrosine	bOH-Cl-Tyr	bOH-Tyr or bOH-Cl-Tyr	bht
+214	3-amino-6-hydroxy-2-piperidone	Ahp	Ahp, incl. Thr	thr
+216	2,6-diamino-7-hydroxyazelaic acid	Daz	Daz	xxx
+216	N-methyl-5-hydroxytryptophan	NMe-OH-Trp	Trp or OH-Trp	trp
+216	methoxytryptophan	OMe-Trp	Trp or OMe-Trp	trp
+216	4-amino-7-guanidino-2,3-dihydroxyheptanoic acid	Agdha	Arg or Agdha	arg
+218	3,5-dichloro-4-hydroxyphenylglycine	Cl2-Hpg	Hpg	hpg
+219	DHP-methyloxazolinyl group	DMOG	diOH-Bz-Thr	dhb thr
+219	N-methoxyacetyl-D-phenylalanine	NOMe-Ac-D-Phe	Phe	phe
+221	D-6’-chloro-tryptophan	D-Cl-Trp	Trp or Cl-Trp	trp
+221	dihydroxyphenylthiazol group	DHPT	diOH-Bz-Cys	dhb cys
+226	bromophenylalanine	Br-Phe	Phe or Br-Phe	phe
+228	N-acetyltryptophan	Ac-Trp	Trp	trp
+228	beta,beta,N-trimethyltryptophan	bbMe-NMe-Trp	Trp or bbMe-Trp	trp
+229	tri-chloro-N-methyl-dehydroLeucine	Cl3-NMe-dhLeu	Leu or dhLeu	leu
+230	D-2-carboxy-tryptophan	D-COOH-Trp	Trp or COOH-Trp	trp
+230	thiazolylphenylalanine	Phe-Thz	Phe-Cys	phe cys
+231	tri-chloro-N-methyl-Leucine	Cl3-NMe-Leu	Leu	leu
+235	N-methyl-6-chloro-tryptophan	NMe-Cl-Trp	Trp or Cl-Trp	trp
+240	beta-methyl-bromophenylalanine	bMe-Br-Phe	bMe-Br-Phe	xxx
+242	beta-hydroxy-bromophenylalanine	bOH-Br-Phe	Phe  or bOH-Br-Phe	phe
+242	bromotyrosine	Br-Tyr	Tyr or Br-Tyr	tyr
+242	beta,beta,N1,N-tetramethyltryptophan	bbNMe-NMe-Trp	Trp or bbNMe-Trp	trp
+247	tri-chloro-2-hydroxy-N-methyl-Leucine	Cl3-2OH-NMe-Leu	Leu or 2OH-Leu	leu
+247	tri-chloro-5-hydroxy-N-methyl-Leucine	Cl3-5OH-NMe-Leu	Leu or 5OH-Leu	leu
+251	N-methyl-6-chloro-5-hydroxytryptophan	NMe-Cl-OH-Trp	Trp or Cl-OH-Trp	trp
+256	D-3-bromo-N-methyl-Tyrosine	D-Br-NMe-Tyr	Tyr or Br-Tyr	tyr
+258	N1-carboxy-bichomotryptophan	N1-COOH-bhTrp	N1-COOH-bhTrp or bhTrp	xxx
+259	pyoverdin chromophore	ChrP	Tyr-Dab	tyr dab
+259	isopyoverdin chromophore	ChrI	Tyr-Dab	tyr dab
+261	5,6-dihydropyoverdin chromophore	ChrD	Tyr-Dab	tyr dab
+264	D-6-chloro-N2-formamidotryptophan	D-Cl-CONH2-Trp	Trp or Cl-CONH2-Trp	trp
+265	5-bromo-tryptophan	Br-Trp	Trp or Br-Trp	trp
+266	8,10-Dimethyl-9-hydroxy-7-methoxytridecadienoic acid	DHMDA	DHMDA	xxx
+272	4-propenoyl-2-tyrosylthiazole acid	PTTA	Tyr-v-Cys	tyr
+279	N-methyl-2-Bromo-tryptophan	NMe-Br-Trp	Trp or Br-Trp	trp
+281	2-bromo-5-hydroxytryptophan	Br-OH-Trp	Trp or Br-OH-Trp	trp
+285	azotobactins chromophore	ChrA	Tyr-Dab	tyr
+303	D-3-iodo-N-methyl-Tyrosine	D-I-NMe-Tyr	Tyr	tyr
+310	actinomycin chromophore	ChrAct	4-Methyl-3-hydroxy-anthranilic acid	xxx
