@@ -1,3 +1,7 @@
+Skeleton framework for tests added.
+
+---
+
 CLI skeleton added, to make things a little tidier.
 
 ---

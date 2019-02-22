@@ -148,10 +148,7 @@ def svm_I(M, M_lookup):
 		   0.75 if match == "small_class_match" else 
 		   1.0 if match == "exact_match" else 0)))
 
-'''Creates a doubly-nested dictionary that maps a pair of amino acids to whether their product class matches, 
-	based on https://www.sigmaaldrich.com/life-science/metabolomics/learning-center/amino-acid-reference-chart.html'''
-def six_class_matcher():
-	classes = {
+six_classes = {
 		"aliphatic": ["Ala", "Ile", "Leu", "Met", "Val"],
 		"aromatic": ["Phe", "Trp", "Tyr"],
 		"neutral_side_chains": ["Asn", "Cys", "Gln", "Ser", "Thr"],
@@ -159,8 +156,12 @@ def six_class_matcher():
 		"basic": ["Arg", "His", "Lys"],
 		"unique": ["Gly", "Pro"]
 	}
+		   
+'''Creates a doubly-nested dictionary that maps a pair of amino acids to whether their product class matches, 
+	based on https://www.sigmaaldrich.com/life-science/metabolomics/learning-center/amino-acid-reference-chart.html'''
+def six_class_matcher():
 	
-	class_list = [set(c) for c in classes]
+	class_list = [set(c) for c in six_classes]
 	dict = {ele:{other_ele:0.5 for other_ele in (c - set(ele))} for c in class_list for ele in c}
 	dict.update({ele:{ele:"exact_match"} for ele in alphabet})
 	return dict
