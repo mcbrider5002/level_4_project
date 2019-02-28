@@ -6,6 +6,7 @@
 \usepackage{amssymb}
 
 \newcommand{\cit}[1]{(\cite{#1})}
+\newcommand{\pa}{\[P(A) = \dfrac{n(A) + \dfrac{k}{|\mathbb{A}|}}{\sum_{A \in \mathbb{A}}{n(A) + k}}\]}
 \newcommand{\scoreeqn}{\[S(C|T) = \sum_{A \in T}{ln\left(\dfrac{
 												    P(A) + c\cdot ({I_{A, M}}^\eta + x\cdot {P(A)})
 												    }{P(A)\cdot(1 + c \cdot (\sum_{A \in \mathbb{A}}{({I_{A, M}}^\eta} + x))
@@ -123,9 +124,13 @@ Furthermore, we may want to investigate product classes other than NRPS and RiPP
 
 \section{Mass Spectrometry}
 
+Mass spectrometry is a common technique in chemistry for the identification of the chemical composition of a molecule by ionising it, causing it to break into fragments. This gives a series of ordered readings of mass and intensity - we can infer the gaps between mass peaks are due to the fragmentation of a molecule, and can then translate the mass being broken off into chemical composition using knowledge of molecular weights stored in a dedicated mass translation table. Traditionally, this was a problem hand-solved by chemists, but has long been a target for computational processes due to the ease of translation of these numerical processes. 
+
+Once mass shifts have been translated to potential compounds, these can be joined together, end-to-end into longer sequences of compounds - 'sequence tags'. Then, computational resources can be used to easily mine a group of mass spectrometry readings for sequence tags. However, there will inevitably be noise in mass spectrometry readings, whether from measurement error or the breaking off of small fragments that don't represent a significant part of the molecule. For this reason, two variables are introduced: an \textit{intensity threshold} and a \textit{mass tolerance}. We can firstly cut out all low-quality readings by cutting out all readings below a certain intensity; secondly, we can account for slight discrepancies in mass measurements by measuring mass shifts within some interval rather than taking the exact values from the mass table. Good values for these variables depend on the dataset in question, and a good general pair of values is currently unknown.
+
 \section{BGC Substrate Detection}
 
-\subsection{NRPS and antiSMASH}
+\subsection{NRPs and antiSMASH}
 
 antiSMASH (antibiotics and Secondary Metabolite Analysis Shell) \cit{as4} is a widely-used piece of bioinformatics software used for the automated labelling of BGCs and geonome-mining of secondary metabolites from raw sequence geonome sequence data extracted from bacteria, fungi or plants. It is usable both as a standalone program on MacOS or Linux and as a web-server and has gone through several revisions and is, at the time of writing, currently up to version 4.0. Therefore, it aggregates many of the latest developments in natural product research and offers many features for the handling of such sequence data and the annotation of its BGCs, outputting data in the standard GenBank format.
 
@@ -135,9 +140,17 @@ Machine learning is frequently used in bioinformatics to extrapolate underlying 
 
 \subsection{RiPPs, their six-frame translation and RiPPQuest}
 
+For RiPPs, the translation process is more direct than with NRPs, and does not require an external platform like antiSMASH to make substrate predictions. This process can be done via the 'six-frame translation'. DNA strands are made of long strings of four bases (Alanine, Glycine, Thymine and Cytosine) which can easily be represented and processed in computer systems in large numbers, and which bind in A-T and G-C pairs across the two strands. These bases, in groups of three known as codons, reliably encode amino acids in ways we can extract. However, when looking at a geonome, we do not know where the first codon begins - it could begin at any of three positions. Then, the encoding could be done by either strand - we only store one strand, but we can retrieve its reverse complement by converting the base to its corresponding base and reversing the strand - for a total of six different encodings. This is the six-frame translation method we use for RiPPs.
+
+Among RiPPs, there are many subtypes. One particular subclass of interest is the lanthipeptide, which is specifically targeted by the bioinformatics software RiPPQuest. \cit{rippq} The RiPPQuest method centres on the prediction of the 'LANC-like' domain in the geonome, which is important for the biosynthesis of lanthipeptides in particular. It then centres its translation window around the LANC-like domain and begins searching using the six translation frames. As a result, it provides more accurate results for lanthipeptides in particular. We do not implement the RiPPQuest method here, and instead implement a more general method with looser assumptions in order to target all classes of RiPP, but we highlight this method as a possibility for future extension.
+
 \section{Pep2Path}
 
-\scoreeqn
+Pep2Path \cit{p2p} provides two algorithms, NRP2Path and RiPP2Path. Both rely on the same principles of mass spectrometry. In the original Pep2Path source program, mass search tags can either be given directly or can be derived from a mass-shift sequence. They then extract relevant BGC information from a sequence, and compare potential sequence tags to potential BGCs using a different scoring function for each algorithm in order to enable finding the best match.
+
+\subsection{NRP2Path}
+
+NRP2Path first takes potential sequence tags and antiSMASH substrate specificity predictions. These sequence tags can be arranged either forwards or backwards, and within the prediction there are several different NRPS modules, which themselves can either be arranged forwards or backwards and can be arranged in any order to make up the full BGC sequence. So in order to test all possible gene sequences, Pep2Path must generate all permutations of the cartesian products of the forwards and backwards modules (a total of \(n!.2^n\) different orderings for \(n\) modules). The sequence tag and the gene sequence are then aligned with one another and scored for their match, testing every possible alignment in order to find the best score.
 
 \begin{figure}
     \centering
@@ -149,17 +162,42 @@ Machine learning is frequently used in bioinformatics to extrapolate underlying 
     BGC. using the abbreviated scoring function shown below. Figure adapted from the publicly-available Pep2Path paper and online documentation.
     }
 
-    \label{fig:nrp2path} 
+    \label{fig:nrp2path}
+
+
+In order to compare a sequence tag to a BGC, NRP2Path uses its own scoring function loosely inspired by Bayes' Rule. We omit the details of its derivation here for brevity's sake, but they are available in the original paper.
+
+\scoreeqn
+
+
+\(S(C|T)\) is the score of a gene cluster given the sequence tag. \(A\) is the amino acid making up part of a tag, and \(\mathbb{A}\) is the total amino acid alphabet being used. \(c\) and \(x\) are parameters that express the degree of confidence that final probability relies on substrate specificity rather than prior probability, and a pseudo-count to correct for small sample size, with default values \(c=1\) and \(x=0.01\), respectively. \(\eta\) is a regularisation term allowing for the increased penalisation of repeated mismatches. \\
+
+\(I_{A, M}\) is the average of two values calculated separately for the Stachelhaus Code and SVM predictions. The Code prediction is based on the closeness to the closest known NRPS module for NRPSPredictor2, whereas the SVM value is assigned between five evenly-spaced thresholds between 0 and 1 based on how closely the classes of the amino acid match (0 for no relation, 1 for exact match). \\
+
+\(P(A)\) is the prior probability of \(A\), calculated like so:
+
+\pa
+
+where k is another pseudocount with k=1 and n(A) is the number of appearances within the NORINE database. \cit{norine}
+
+\subsection{RiPP2Path}
+ 
 \end{figure}
 
 %==================================================================================================================================
 \chapter{Analysis/Requirements}
+
+\section{Requirements}
 
 %==================================================================================================================================
 \chapter{Design}
 
 %==================================================================================================================================
 \chapter{Implementation}
+
+\section{Language Choice}
+
+We chose to use Python for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options.
 
 %==================================================================================================================================
 \chapter{Evaluation} 
