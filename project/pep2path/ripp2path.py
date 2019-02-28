@@ -49,7 +49,7 @@ def ripp2path(spectra_tags, path, file, noResults=100):
 					for (frame_no, frame, strand), (spectra_name, tag) in itertools.product(zip(range(6), frames, strands), single_char_tags) 
 							for i in range(len(frame) - len(tag))]
 	
-	return sorted(scores, key=lambda t: t[2], reverse=True)[:noResults]
+	return sorted(scores, key=lambda t: t[5], reverse=True)[:noResults]
 	
 def ripp_printer(headers, scores, label_width=4, column_width=14, outpath=os.path.dirname(__file__), outfile="ripps.out"):
 	no_entries = len(headers)
