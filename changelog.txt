@@ -1,3 +1,7 @@
+Untested Ripp2Path added. Also very slow.
+
+---
+
 CLI skeleton added, to make things a little tidier.
 
 ---
