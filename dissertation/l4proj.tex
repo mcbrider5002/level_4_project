@@ -6,7 +6,7 @@
 \usepackage{amssymb}
 
 \newcommand{\cit}[1]{(\cite{#1})}
-\newcommand{\pa}{\[P(A) = \dfrac{n(A) + \dfrac{k}{|\mathbb{A}|}}{\sum_{A \in \mathbb{A}}{n(A) + k}}\]}
+\newcommand{\pa}{\[P(A) = \dfrac{n(A) + \dfrac{k}{|\mathbb{A}|}}{\sum_{(A \in \mathbb{A}}{n(A) + k})}\]}
 \newcommand{\scoreeqn}{\[S(C|T) = \sum_{A \in T}{ln\left(\dfrac{
 												    P(A) + c\cdot ({I_{A, M}}^\eta + x\cdot {P(A)})
 												    }{P(A)\cdot(1 + c \cdot (\sum_{A \in \mathbb{A}}{({I_{A, M}}^\eta} + x))
@@ -91,7 +91,7 @@ The aims of the project are to:
 \item Follow good software practises in the implementation such as loose coupling such that we can achieve software reuse, a cornerstone of software development.
 \end{itemize}
 
-\section{Motivation}
+\section{Motivation} \label{motivation}
 
 Various biological compounds, are formed from assembly-chains of smaller compounds, such as peptides, formed from amino acids.
 If we look at this problem as a computer scientist might, the first thing to come to mind in identifying useful drugs within this space might be an exhaustive search of all combinations of molecule.
@@ -122,11 +122,15 @@ Furthermore, we may want to investigate product classes other than NRPS and RiPP
 %==================================================================================================================================
 \chapter{Background}
 
+The motivation for Pep2Path comes from the recent technology of Peptidogenomics. \cit{peptidogenomics} In this original paper the authors propose the method of comparing sequence tags to translated/predicted geonomes for ribosomally-synthesised and non-ribosomally synthesised peptides respectively in order to mine for interesting natural products. However, while there were computational tools for aspects of this process, such as the interpretation of mass spectra and the interpretation of geonomes, there was no end-to-end tool automating Peptidogenomics - until Pep2Path. During this section we discuss the background behind Peptidogenomics and Pep2Path, and some of the relevant literature.
+
 \section{Mass Spectrometry}
 
-Mass spectrometry is a common technique in chemistry for the identification of the chemical composition of a molecule by ionising it, causing it to break into fragments. This gives a series of ordered readings of mass and intensity - we can infer the gaps between mass peaks are due to the fragmentation of a molecule, and can then translate the mass being broken off into chemical composition using knowledge of molecular weights stored in a dedicated mass translation table. Traditionally, this was a problem hand-solved by chemists, but has long been a target for computational processes due to the ease of translation of these numerical processes. 
+Mass spectrometry is a common technique in chemistry for the identification of the chemical composition of a molecule by ionising it, causing it to break into fragments. There are multiple approaches to mass spectrometry, and multiple ways to interpret the data - for interpretation, there exist dereplicator tools like iSNAP \cit{isnap} and Dereplicator+ \cit{derep+} which attempt to statistically mass spectra output to \textit{known} molecules in a database. Dereplicator+ for example, functions by comparing them to sample mass-spectra generated from a known database of chemicals, by simulating how the molecules of those spectra will fragment. 
 
-Once mass shifts have been translated to potential compounds, these can be joined together, end-to-end into longer sequences of compounds - 'sequence tags'. Then, computational resources can be used to easily mine a group of mass spectrometry readings for sequence tags. However, there will inevitably be noise in mass spectrometry readings, whether from measurement error or the breaking off of small fragments that don't represent a significant part of the molecule. For this reason, two variables are introduced: an \textit{intensity threshold} and a \textit{mass tolerance}. We can firstly cut out all low-quality readings by cutting out all readings below a certain intensity; secondly, we can account for slight discrepancies in mass measurements by measuring mass shifts within some interval rather than taking the exact values from the mass table. Good values for these variables depend on the dataset in question, and a good general pair of values is currently unknown.
+However, for our purposes we have a series of ordered readings of mass and intensity - we can infer the gaps between mass peaks are due to the fragmentation of a molecule, and can then translate the mass being broken off into chemical composition using knowledge of molecular weights stored in a dedicated mass translation table. (The so-called \textit{'de novo'} mass spectrometry technique - alternative methods are an active area of research.) Traditionally, this was a problem hand-solved by chemists, but has long been a target for computational processes due to the ease of translation of these numerical processes. 
+
+Once mass shifts have been translated to potential compounds, these can be joined together, end-to-end into longer sequences of compounds - 'sequence tags'. Then, computational resources can be used to easily mine a group of mass spectrometry readings for sequence tags. However, there will inevitably be noise in mass spectrometry readings, whether from measurement error or the breaking off of small fragments that don't represent a significant part of the molecule. For this reason, two variables are introduced: an \textit{intensity threshold} and a \textit{mass tolerance}. We can firstly cut out all low-quality readings by cutting out all readings below a certain intensity; secondly, we can account for slight discrepancies in mass measurements by measuring mass shifts within some interval rather than taking the exact values from the mass table. Good values for these variables depend on the dataset in question, and a good general pair of values is currently unknown, but processing mass spectra in this way is standard across most approaches.
 
 \section{BGC Substrate Detection}
 
@@ -142,7 +146,11 @@ Machine learning is frequently used in bioinformatics to extrapolate underlying 
 
 For RiPPs, the translation process is more direct than with NRPs, and does not require an external platform like antiSMASH to make substrate predictions. This process can be done via the 'six-frame translation'. DNA strands are made of long strings of four bases (Alanine, Glycine, Thymine and Cytosine) which can easily be represented and processed in computer systems in large numbers, and which bind in A-T and G-C pairs across the two strands. These bases, in groups of three known as codons, reliably encode amino acids in ways we can extract. However, when looking at a geonome, we do not know where the first codon begins - it could begin at any of three positions. Then, the encoding could be done by either strand - we only store one strand, but we can retrieve its reverse complement by converting the base to its corresponding base and reversing the strand - for a total of six different encodings. This is the six-frame translation method we use for RiPPs.
 
-Among RiPPs, there are many subtypes. One particular subclass of interest is the lanthipeptide, which is specifically targeted by the bioinformatics software RiPPQuest. \cit{rippq} The RiPPQuest method centres on the prediction of the 'LANC-like' domain in the geonome, which is important for the biosynthesis of lanthipeptides in particular. It then centres its translation window around the LANC-like domain and begins searching using the six translation frames. As a result, it provides more accurate results for lanthipeptides in particular. We do not implement the RiPPQuest method here, and instead implement a more general method with looser assumptions in order to target all classes of RiPP, but we highlight this method as a possibility for future extension.
+Among RiPPs, there are many subtypes. One particular subclass of interest is the lanthipeptide, which is specifically targeted by the bioinformatics software RiPPQuest. \cit{rippq} A successor to the original Peptidogenomics paper, the RiPPQuest method centres on the prediction of the 'LANC-like' domain in the geonome, which is important for the biosynthesis of lanthipeptides in particular. It then centres its translation window around the LANC-like domain and begins searching using the six translation frames. 
+
+One particular note is that as sequence data gets larger, so will the probability of random matches to our sequence tag. This method works best if we have either longer sequence tags, or shorter sequence data. If we assume (as a purely illustrative exercise) that there is uniform probability for each sequence tag across the chemical space, for the 20 proteinogenic amino acids (the alphabet for RiPPs) then the probability of any given sequence tag of length 2 is \(\dfrac{1}{400}\). Relatively likely, even in small data. However, a peptide of length 4 would have the probability \(\dfrac{1}{160000}\). Of course, longer geonome sequences may contain enough data to appear to have several million peptides and \textit{still} randomly match tags of length 4, 5 or even upwards, but it gets exponentially less likely as sequence tag length increases.
+
+One of the motivations for RiPPQuest is that lanthipeptides have relatively short sequence tags, and thus it is necessary to target the sequence length. So by targeting the translation window around a LANC-like domain, RiPPQuest searches less of the genome and provides more accurate results, but while only operating on lanthipeptides in particular. (These are some of the features relevant for comparison to our method - there are other complexities to their method which we will not remark on here.) We do not implement the RiPPQuest method here, and instead implement a more general method with looser assumptions in order to target all classes of RiPP, but we highlight this method as a possibility for future extension.
 
 \section{Pep2Path}
 
@@ -163,6 +171,7 @@ NRP2Path first takes potential sequence tags and antiSMASH substrate specificity
     }
 
     \label{fig:nrp2path}
+\end{figure}
 
 
 In order to compare a sequence tag to a BGC, NRP2Path uses its own scoring function loosely inspired by Bayes' Rule. We omit the details of its derivation here for brevity's sake, but they are available in the original paper.
@@ -180,17 +189,75 @@ In order to compare a sequence tag to a BGC, NRP2Path uses its own scoring funct
 
 where k is another pseudocount with k=1 and n(A) is the number of appearances within the NORINE database. \cit{norine}
 
+Finally, the degree of matching between any gene sequence and mass spectrometry output is defined as the maximum of its scores across any alignment.
+
 \subsection{RiPP2Path}
- 
-\end{figure}
+
+While RiPPQuest provides a method for the matching of BGCs to mass spectrometry readings in lanthipeptides, it does not cover all RiPPs. Following RiPPQuest, Pep2Path introduced RiPP2Path, a simple accessory tool for more broad matching of RiPPs. It functions by running a sliding window containing the sequence tag over every position of every translation frame in a gene sequence, computing the number of amino acid matches over the total length of the tag and then returning the highest scores.
+
+Unlike RiPPQuest, this algorithm is naively targeted and distinguishes gene sequences only by the score they receive. This does have penalties for accuracy where any identified sequence is more have appeared purely by random chance especially in larger data, and costs more processing power inasmuch as it searches more, but it comes with the benefits of a very simple algorithm and is capable of applying the technology of peptidogenomics to all classes of RiPP, not just lanthipeptides.
 
 %==================================================================================================================================
 \chapter{Analysis/Requirements}
 
 \section{Requirements}
 
+For this project, the supervisor acted as a client, proposing the software for eventual integration into a larger codebase, and due to greater domain experience provided requirements implicitly as the project progressed. 
+
+Firstly, we wanted a set of tools to implement the original Pep2Path functionality. This meant implementing NRP2Path and RiPP2Path. Secondly, the client had their own dataset for which the alignment comparison of NRP2Path might prove particularly cumbersome. This then meant being able to read the formats of the data available, and implement a simpler algorithm comparing the overlap between components. We also desired these implementations to be flexible with respect to future advances in bioinformatics, allowing the integration of custom scoring functions, as we outlined in the introduction. (\ref{motivation}) We implement these described algorithms both to solve this more proximal problem, and demonstrate the flexibility of our implementation.
+
+<note to explain some other requirements below>
+
+We list functional requirements here using the MoSCoW method, and then non-functional requirements separately.
+
+\subsection{Must Have}
+
+\begin{itemize}
+
+\item A mass spectrometry tool capable of converting mass/intensity readings to sequence tags.
+\item Various small tools to be able to read in input data from standard file formats. Particularly, the ability to read the domain-standard antiSMASH-produced Genbank file formats.
+\item A software base allowing the integration of custom scoring functions.
+\item Implementation of a simpler BGC/mass-spectrometry comparison equivalent to taking the set intersection of the components in both, more suited to datasets with shorter sequence tags.
+\item A full implementation of NRP2Path.
+\item A suite of unit tests verifying the behaviour of the implementations of the various algorithms and improving future maintainability.
+\end{itemize}
+
+\subsection{Should Have}
+
+\begin{itemize}
+\item A full implementation of RiPP2Path.
+\item The ability to run a 'many-to-many' comparison between BGC-predictions and mass spectrometry.
+\item Replications of the original experimental results for Pep2Path (not necessarily exact, but on-target) to demonstrate functional correctness by practical test.
+\item Integration with the client's codebase.
+\end{itemize}
+
+\subsection{Could Have}
+
+\begin{itemize}
+\item A simple CLI to run as a standalone.
+\item An accessory visualisation tool to plot mass spectra with predicted sequence tags over them.
+\item An adaptation of the RiPPQuest method to narrow down the translation around to just the region around the LANC-like domain for lanthipeptides.
+\end{itemize}
+
+\subsection{Won't Have}
+
+\begin{itemize}
+\item Implementations of novel scoring functions, such as one that takes advantage of antiSMASH 4's use of the SANDPUMA ensemble.
+\item Transparency of design.
+\item A full implementation of the RiPPQuest method for geonome mining on lanthipeptides.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+\begin{itemize}
+\item Should maintain strong separation of concerns and loose coupling, so components can be reused.
+\item Platform-independence (portability).
+\end{itemize}
+
 %==================================================================================================================================
 \chapter{Design}
+
+<note to make it clear that we can check both directions of sequence tag in the NRPS algorithm by checking all module configurations against one sequence tag>
 
 %==================================================================================================================================
 \chapter{Implementation}
