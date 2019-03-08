@@ -5,21 +5,28 @@ from pep2path.spectra.drawSpectra import main as graph_main
 
 from pep2path.spectra.tests import tests as spectra_tests
 from pep2path.genbank.tests import tests as genbank_tests
-from pep2path.tests import tests as comparison_tests
+from pep2path.tests import nrp_tests
+from pep2path.tests import ripp_tests
 
 from pep2path.ripp2path import test_ripp2path
 
 def spectra(args): spectra_main()
 def graph(args): graph_main()
+
 def tests(args):
-	#to add other tests
 	spectra_tests()
+	genbank_tests()
+	nrp_tests()
+	ripp_tests()
+	
 def experiment(args):
 	#tba
 	pass
+	
 def comparisons(args):
 	#tba
 	pass
+	
 def testripp(args):
 	test_ripp2path()
 

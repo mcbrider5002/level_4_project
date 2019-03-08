@@ -3,44 +3,100 @@ import numpy as np
 import random
 import string
 import itertools
-from collections import defaultdict
+from collections import Counter
 
 from .MassSpectrum import MassSpectrum
 from .MassSpectraAggregate import MassSpectraAggregate
 from .Tag import Tag
 from .SpectrumTags import SpectrumTags
 
-##########
-###Data###
-##########
+from .masstables import AA_mass_table, AA_alphabet
 
-#uses avg mass instead of monoisotopic
-AA_mass_table = {	
-					"Ala" : 71.0779,
-					"Arg" : 156.1857,
-					"Asn" : 114.1026,
-					"Asp" : 115.0874,
-					"Cys" : 103.1429,
-					"Gln" : 128.1292,
-					"Gly" : 57.0513,
-					"His" : 137.1393,
-					"Ile/Leu" : 113.1576,
-					"Lys" : 128.1723,
-					"Met" : 131.1961,
-					"Phe" : 147.1739,
-					"Pro" : 97.1152,
-					"Ser" : 87.0773,
-					"Thr" : 101.1039,
-					"Sec" : 150.0379,
-					"Trp" : 186.2099,
-					"Tyr" : 163.1733,
-					"Val" : 99.1311
-				}
+###############
+###Tag Tests###
+###############
+
+'''Helper to generate a list of lists of random components.'''
+def generate_comp_lists(alphabet):
+	return [[str(random.choice(list(alphabet))) for length in range(random.randint(2, 10))] for number in range(random.randint(1, 5))]
+
+'''Helper to generate a list of random tags.'''	
+def generate_tag(alphabet):
+	generated = generate_comp_lists(alphabet)
+	strings = ["-".join(g) for g in generated]
+	tags = [Tag(s, [], []) for s in strings]
+	return generated, strings, tags  
 	
-###########
-###Tests###
-###########
+'''Helper to generate a dict of random tags, stored by length.'''	
+def generate_tag_dict(alphabet):
+	generated, strings, tags = generate_tag(alphabet)
+	lengths = [len(g) for g in generated]
+	longest = max(lengths)
+	tag_dict = {length:[t for l, t in zip(lengths, tags) if l == length] for length in range(1, longest + 1) if length in lengths}
+	return generated, strings, tags, lengths, longest, tag_dict
+		   
+def test_decompose_tag(alphabet=AA_alphabet):
 
+	generated, strings, tags, lengths, longest, tag_dict = generate_tag_dict(alphabet)
+	
+	string = strings[0]
+	tag = tags[0]
+	assert tag.decompose_tag() == generated[0] and Tag("-%s-" % string, [], []).decompose_tag() == generated[0], "decompose_tag fails test!"
+	
+	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
+	
+	tag_dict2 = {length:[Tag("-%s-" % tag.tag, [], []) for tag in tags] for length, tags in tag_dict.items()}
+	s_tags2 = SpectrumTags("dummy_id", longest, tag_dict2)
+	
+	tdict = {length:[g for g in generated if len(g) == length] for length in range(1, longest + 1) if length in lengths}
+	assert (s_tags.decompose_tags() == tdict) and (s_tags2.decompose_tags() == tdict), "decompose_tags fails test!"
+	
+def test_component_counts(alphabet=AA_alphabet):
+	
+	generated, _, tags, _, longest, tag_dict = generate_tag_dict(alphabet)
+	counts = Counter(itertools.chain.from_iterable(generated))
+	
+	c = Counter(generated[0])
+	tag = tags[0]
+	assert tag.component_counts() == c, "component_counts fails test!"
+	
+	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
+	assert s_tags.multi_component_counts() == counts, "multi_component_counts fails test!"
+	
+def test_unique_components(alphabet=AA_alphabet):
+
+	generated, _, tags, lengths, longest, tag_dict = generate_tag_dict(alphabet)
+	uniques = list(map(set, generated))
+	
+	unique = uniques[0]
+	tag = tags[0]
+	assert set(tag.unique_components()) == unique, "Tag's unique_components fails test!"
+	
+	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
+	assert set(s_tags.unique_components()) == set(itertools.chain.from_iterable(uniques)), "SpectrumTags' unique_components fails test!"
+
+'''Helper to ensure ordering of tags doesn't matter.'''
+def srt(s): sorted(s, key = lambda tag : tag.tag)
+	
+def test_filter_by_length(alphabet=AA_alphabet):
+	_, strings, tags, lengths, longest, tag_dict = generate_tag_dict(alphabet)
+	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
+	
+	assert all([srt(s_tags.filter_by_length(length)) == srt([t for l, t in zip(lengths, tags) if l == length]) for length in range(longest)]), \
+			"filter_by_length fails test!"
+		   
+def test_expand_tag_notation(alphabet=AA_alphabet):
+	pass
+		
+def test_flatten_tags(alphabet=AA_alphabet):
+	_, _, tags, _, longest, tag_dict = generate_tag_dict(alphabet)
+	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
+	assert srt(s_tags.flatten_tags()) == srt(tags), "flatten_tags fails test!"
+
+###################
+###Spectra Tests###
+###################	
+	
 '''Tests correctness of MassSpectraAggregate's get_spectra_ids, attach_spectra_ids and get_spectra_by_id.'''
 def test_sequence_by_id_helpers():
 
@@ -215,29 +271,32 @@ def test_mass_tolerance_calculations():
 	
 	percentiles = [0.05 * np.array(spectrum.ms2peaks) for spectrum in spectra] #we'll just use percentages for the static values
 	mass_tolerances = [(spectrum.ms2peaks - percentile, spectrum.ms2peaks + percentile) for spectrum, percentile in zip(spectra, percentiles)]
+	
 	assert (all([np.allclose(mass_tolerance, MassSpectrum.static_mass_tolerance(spectrum.ms2peaks, percentile)) 
 						for mass_tolerance, spectrum, percentile in zip(mass_tolerances, spectra, percentiles)])), \
 			"static_mass_tolerance fails test!"
+			
 	assert (all([np.allclose(mass_tolerance, MassSpectrum.rel_ppm_mass_tolerance(spectrum.ms2peaks, 0.05))
 						for mass_tolerance, spectrum in zip(mass_tolerances, spectra)])), \
 		   "percentile_mass_tolerance fails test!"
 		
 	percentiles = [0.05 * maxm for maxm in spectra_aggregate.max_mass_local()]
 	mass_tolerances = [(spectrum.ms2peaks - percentile, spectrum.ms2peaks + percentile) for spectrum, percentile in zip(spectra, percentiles)]
+	
 	assert (all([np.allclose(mass_tolerance, spectrum.max_ppm_mass_tolerance(spectrum.ms2peaks, 0.05))
 				for mass_tolerance, spectrum in zip(mass_tolerances, spectra)])), \
 		   "ppm_mass_tolerance fails test!"
 	
 '''Tests MassSpectrum's find_sequence_tags and MassSpectraAggregate's longest_tag.'''
-def test_find_longest_tag():
+def test_find_longest_tag(mass_table=AA_mass_table):
 
 	mass_threshold = 0.001 #used to add and detect noise (static value)
 	
 	'''Helper to randomly generate tags in a spectrum, with extra peaks corresponding to nothing, and noise.'''
 	def generate_spectrum():
 		#generate the masses of a few mass tags to become a sequence tag, generate several 'sequence tags' this way
-		printable_tags = [[str(random.choice(list(AA_mass_table.keys()))) for length in range(random.randint(2, 10))] for number in range(random.randint(1, 5))]
-		tags = [[AA_mass_table[element] for element in tag] for tag in printable_tags]
+		printable_tags = [[str(random.choice(list(mass_table.keys()))) for length in range(random.randint(2, 10))] for number in range(random.randint(1, 5))]
+		tags = [[mass_table[element] for element in tag] for tag in printable_tags]
 		
 		#first element in generated tag elements doesn't actually represent a difference, just a starting mass, so we exclude it from tag
 		printable_tags = [[element for element in tag][1:] for tag in printable_tags] 
@@ -260,7 +319,7 @@ def test_find_longest_tag():
 		
 		printable_tags = ["-" + "-".join(tag) + "-" for tag in printable_tags]
 		
-		return MassSpectrum(ms2peaks=ms2peaks, mass_table=AA_mass_table, misc={"printable_tags":printable_tags})
+		return MassSpectrum(ms2peaks=ms2peaks, mass_table=mass_table, misc={"printable_tags":printable_tags})
 		
 	'''Helper to generate spectra and spectra aggregate.'''
 	def generate_spectra():
@@ -292,70 +351,16 @@ def test_find_longest_tag():
 	tag_lengths = [spectrum_tags.longest_tag for spectrum_tags in spectra_tags]
 	assert ((longest_tag == 0 or longest_tag == max(tag_lengths)) and all(returned_tags)), \
 		   "find_longest_tag fails test!"
-	
-'''Helper function to automate generating dicts full of random 'sequence tags'.'''
-def generate_tag_dict():
-
-	def generate_random_string(length):
-		return [str([random.choice(string.ascii_letters) for j in range(random.randint(1, 4))]) for i in range(length)]
-
-	tags = {}
-	for length in range(1, random.randint(4, 11)):
-		tags[length] = [Tag("-".join(generate_random_string(length)), [], []) for number in range(random.randint(1, 6))]
-	
-	return tags
-
-'''Tests MassSpectrum's flatten_tags.'''
-def test_flatten_tags():
-	tags = generate_tag_dict()	
-	
-	expanded_tags = []	
-	for length, tag_list in tags.items():
-		for tag in tag_list:
-			expanded_tags.append(tag)
-			
-	longest_tag = max(tags.keys()) if (len(tags.keys()) > 0) else 0
-	spectrum_tags = SpectrumTags("fake_id", longest_tag, tags)
-			
-	sorting_key = lambda tag : tag.tag
-	assert (sorted(spectrum_tags.flatten_tags(), key=sorting_key) == sorted(expanded_tags, key=sorting_key)), \
-		   "flatten_tags fails test!"
-		   
-'''Tests MassSpectrum's expand_tag_notation.'''
-def test_expand_tag_notation():
-	pass
-	'''tags = generate_tag_dict()
-	expanded_tags = defaultdict(list)
-	for length, spectra in tags.items():
-		for tag, peaks in spectra:
-			print("meme")
-			print(list(eval(split_tag)) for split_tag in tag.split('-'))
-			print(list(itertools.product(eval(split_tag) for split_tag in tag.split('-'))))
-			#expanded_tags[length] += list(itertools.product(eval(split_tag) for split_tag in tag.split('-')))
-		
-	expanded_tags = dict(expanded_tags)
-	
-	print("tags:")
-	print(tags)
-	print("expanded_tags:")
-	print(expanded_tags)
-	if(not(MassSpectrum.expand_tag_notation(tags) == expanded_tags)):
-		print("expand_tag_notation fails test!")'''
-		   
-def test_decompose_tags():
-	pass
-	
-def test_component_counts():
-	pass
-	
-def test_unique_components():
-	pass
-	
-def test_filter_by_length():
-	pass
 
 '''Run tests. They should be randomised, but they will give an indication of whether something is obviously wrong.'''
 def tests():
+	test_decompose_tag()
+	test_component_counts()
+	test_unique_components()
+	test_filter_by_length()
+	test_expand_tag_notation()
+	test_flatten_tags()
+	
 	test_sequence_by_id_helpers()
 	test_max_mass()
 	test_max_intensity()
@@ -364,9 +369,3 @@ def tests():
 	test_normalise_intensity()
 	test_mass_tolerance_calculations()
 	test_find_longest_tag()
-	test_expand_tag_notation()
-	test_flatten_tags()
-	test_decompose_tags()
-	test_component_counts()
-	test_unique_components()
-	test_filter_by_length()

@@ -2,17 +2,17 @@ import itertools
 import os
 from statistics import mean
 
-from spectra.mgfParser import load_files_from_dir as mgfparser
-from spectra.MassSpectrum import MassSpectrum
-from spectra.Tag import Tag
-from spectra.SpectrumTags import SpectrumTags
+from .spectra.mgfParser import load_files_from_dir as mgfparser
+from .spectra.MassSpectrum import MassSpectrum
+from .spectra.Tag import Tag
+from .spectra.SpectrumTags import SpectrumTags
 
-from genbank.gbkParser import parse_genbank
-from genbank.aanames import AA_names
-from genbank.CDSPrediction import CDSPrediction
-from genbank.GenbankFile import GenbankFile
+from .genbank.gbkParser import parse_genbank
+from .genbank.aanames import AA_names
+from .genbank.CDSPrediction import CDSPrediction
+from .genbank.GenbankFile import GenbankFile
 
-import comparisons as compare
+from . import comparisons as compare
 
 '''Given a list of strings filters out any that are not present in the AA table (case-insensitive).'''
 def only_AAs(ls):
@@ -169,11 +169,16 @@ def simple_experiment(shuffled_iters=5, random_iters=5):
 def alignment_experiment(shuffled_iters=5, random_iters=5):
 	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_complex_tables)
 
-s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
-g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]
-spectrum_name, genbank_name, score = compare.compare_alignment([str(s)], s, [str(g)], g)
-print("Spectrum: " + spectrum_name)
-print("Genbank: " + genbank_name)
-print("Score: " + str(score))
+def main():
+	s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
+	g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]
+	spectrum_name, genbank_name, score = compare.compare_alignment([str(s)], s, [str(g)], g)
+	print("Spectrum: " + spectrum_name)
+	print("Genbank: " + genbank_name)
+	print("Score: " + str(score))
 
-#alignment_experiment()
+	#alignment_experiment()
+	
+if __name__ == "__main__":
+
+    main()

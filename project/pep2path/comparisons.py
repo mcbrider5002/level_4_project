@@ -7,7 +7,7 @@ from statistics import mean
 import numpy as np
 from collections import Counter
 
-from masstables import kersten_names, kersten_alphabet, AA_names, AA_alphabet
+from .masstables import kersten_names, kersten_alphabet, AA_names, AA_alphabet
 	
 '''Given a twice nested list, returns a new list with the internal structure and the elements themselves shuffled.'''
 def shuffle_components(gbk_files):

@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter
 
 '''Class to contain a sequence tag.'''
 class Tag():
@@ -15,6 +15,18 @@ class Tag():
 		
 	def __str__(self):
 		return self.tag + " " + str(self.peaks) + " " + str(self.masses)
+		
+	'''Breaks up tag, returning a list of its components.'''
+	def decompose_tag(self):
+		return [split_item for split_item in self.tag.split('-') if split_item != ""]
+		
+	'''Returns a dictionary of counts of all unique components in this tag.'''
+	def component_counts(self):
+		return Counter(self.decompose_tag())
+	
+	'''Returns a list of all unique components in this tag.'''
+	def unique_components(self):
+		return list(self.component_counts().keys())
 		
 	'''A function that expands any instance of multiple tag possibility into several sequence tags with defininite possibilities.
 		So an example tag -A-[A, B, C]-B- will expand into tags -A-A-B-, -A-B-B-, -A-C-B-.
@@ -40,18 +52,3 @@ class Tag():
 		recursive_expansion([], split_tag, 0, new_tags)
 			
 		return new_tags
-		
-	'''Breaks up tag, returning a list of its components.'''
-	def decompose_tag(self):
-		return [split_item for split_item in self.tag.split('-') if split_item != ""]
-		
-	'''Returns a dictionary of counts of all unique components in this tag.'''
-	def component_counts(self):
-		dict = defaultdict(lambda: 0)
-		for component in self.decompose_tag():
-			dict[component] += 1
-		return dict
-	
-	'''Returns a list of all unique components in this tag.'''
-	def unique_components(self):
-		return list(self.component_counts().keys())
