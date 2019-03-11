@@ -18,7 +18,7 @@ from .masstables import AA_mass_table, AA_alphabet
 
 '''Helper to generate a list of lists of random components.'''
 def generate_comp_lists(alphabet):
-	return [[str(random.choice(list(alphabet))) for length in range(random.randint(2, 10))] for number in range(random.randint(1, 5))]
+	return [[str(random.choice(list(alphabet))) for length in range(random.randint(20, 40))] for number in range(random.randint(10, 20))]
 
 '''Helper to generate a list of random tags.'''	
 def generate_tag(alphabet):
@@ -41,7 +41,8 @@ def test_decompose_tag(alphabet=AA_alphabet):
 	
 	string = strings[0]
 	tag = tags[0]
-	assert tag.decompose_tag() == generated[0] and Tag("-%s-" % string, [], []).decompose_tag() == generated[0], "decompose_tag fails test!"
+	assert tag.decompose_tag() == generated[0] , "decompose_tag doesn't match pregenerated tag!"
+	assert Tag("-%s-" % string, [], []).decompose_tag() == generated[0], "decompose_tag (on string with trailing '-') doesn't match pregenerated tag!"
 	
 	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
 	
@@ -49,7 +50,8 @@ def test_decompose_tag(alphabet=AA_alphabet):
 	s_tags2 = SpectrumTags("dummy_id", longest, tag_dict2)
 	
 	tdict = {length:[g for g in generated if len(g) == length] for length in range(1, longest + 1) if length in lengths}
-	assert (s_tags.decompose_tags() == tdict) and (s_tags2.decompose_tags() == tdict), "decompose_tags fails test!"
+	assert (s_tags.decompose_tags() == tdict), "decompose_tags doesn't match pregenerated tags!"
+	assert (s_tags2.decompose_tags() == tdict), "decompose_tags (on string with trailing '-') doesn't match pregenerated tags!"
 	
 def test_component_counts(alphabet=AA_alphabet):
 	
@@ -58,10 +60,10 @@ def test_component_counts(alphabet=AA_alphabet):
 	
 	c = Counter(generated[0])
 	tag = tags[0]
-	assert tag.component_counts() == c, "component_counts fails test!"
+	assert tag.component_counts() == c, "component_counts doesn't match component counts of pregenerated tag!"
 	
 	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
-	assert s_tags.multi_component_counts() == counts, "multi_component_counts fails test!"
+	assert s_tags.multi_component_counts() == counts, "multi_component_counts doesn't match component counts of pregenerated tag!"
 	
 def test_unique_components(alphabet=AA_alphabet):
 
@@ -70,10 +72,10 @@ def test_unique_components(alphabet=AA_alphabet):
 	
 	unique = uniques[0]
 	tag = tags[0]
-	assert set(tag.unique_components()) == unique, "Tag's unique_components fails test!"
+	assert set(tag.unique_components()) == unique, "Tag's unique_components doesn't match components of pregenerated tag!"
 	
 	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
-	assert set(s_tags.unique_components()) == set(itertools.chain.from_iterable(uniques)), "SpectrumTags' unique_components fails test!"
+	assert set(s_tags.unique_components()) == set(itertools.chain.from_iterable(uniques)), "SpectrumTags' unique_components doesn't match components of pregenerated tags!"
 
 '''Helper to ensure ordering of tags doesn't matter.'''
 def srt(s): sorted(s, key = lambda tag : tag.tag)
@@ -83,19 +85,36 @@ def test_filter_by_length(alphabet=AA_alphabet):
 	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
 	
 	assert all([srt(s_tags.filter_by_length(length)) == srt([t for l, t in zip(lengths, tags) if l == length]) for length in range(longest)]), \
-			"filter_by_length fails test!"
+			"filter_by_length doesn't match pregenerated tags filtered by length!"
 		   
 def test_expand_tag_notation(alphabet=AA_alphabet):
-	pass
+	tags = [[random.choice(list(AA_alphabet)) for i in range(4)] for i in range(4)]
+	true_tags = ["-".join(tag) for tag in tags]
+	uncertain_tag = [str(list(comps)) for comps in zip(*tags)]
+	
+	e_tags = Tag("-".join(uncertain_tag), [], []).expand_tag_notation()
+	assert all([tag in e_tags for tag in true_tags]), "expand_tag_notation did not have the true tags within the expanded uncertain tag!"
+	
+	e_tags = Tag("-%s-" % "-".join(uncertain_tag), [], []).expand_tag_notation()
+	assert all([tag in e_tags for tag in true_tags]), "expand_tag_notation did not have the true tags within the expanded uncertain tag (with dashes at the ends)!"
 		
 def test_flatten_tags(alphabet=AA_alphabet):
 	_, _, tags, _, longest, tag_dict = generate_tag_dict(alphabet)
 	s_tags = SpectrumTags("dummy_id", longest, tag_dict)
-	assert srt(s_tags.flatten_tags()) == srt(tags), "flatten_tags fails test!"
+	assert srt(s_tags.flatten_tags()) == srt(tags), "flatten_tags doesn't match pregenerated tags!"
 
 ###################
 ###Spectra Tests###
 ###################	
+
+def test_mappings(trials=1000):
+	spectrum = MassSpectrum()
+	array = np.array(range(trials))
+	for i in range(5):
+		indices = random.sample(range(trials), trials)
+		spectrum.update_mappings(indices)
+		array = array[indices]
+	assert list(array) == list(spectrum.original_indices(range(trials))), "MassSpectrum does not map indices correctly!"
 	
 '''Tests correctness of MassSpectraAggregate's get_spectra_ids, attach_spectra_ids and get_spectra_by_id.'''
 def test_sequence_by_id_helpers():
@@ -354,6 +373,7 @@ def test_find_longest_tag(mass_table=AA_mass_table):
 
 '''Run tests. They should be randomised, but they will give an indication of whether something is obviously wrong.'''
 def tests():
+	test_mappings()
 	test_decompose_tag()
 	test_component_counts()
 	test_unique_components()

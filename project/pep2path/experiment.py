@@ -1,5 +1,7 @@
 import itertools
 import os
+import random
+import numpy as np
 from statistics import mean
 
 from .spectra.mgfParser import load_files_from_dir as mgfparser
@@ -8,9 +10,10 @@ from .spectra.Tag import Tag
 from .spectra.SpectrumTags import SpectrumTags
 
 from .genbank.gbkParser import parse_genbank
-from .genbank.aanames import AA_names
 from .genbank.CDSPrediction import CDSPrediction
 from .genbank.GenbankFile import GenbankFile
+
+from .masstables import AA_names
 
 from . import comparisons as compare
 
@@ -19,8 +22,8 @@ def only_AAs(ls):
 	return [component for component in ls if (component[0].upper() + component[1:].lower()) in AA_names]
 
 '''Read according to antiSMASH format all genbank files contained within the specified directory matching a name in filenames_path.'''
-def get_gbks(path=os.path.join(os.path.join(os.path.join(os.getcwd(), "genbank"), "justin-20181022")),
-				filenames_path="dataset.out"):
+def get_gbks(path=os.path.join(os.path.join(os.path.join(os.path.dirname(__file__), "genbank"), "justin-20181022")),
+				filenames_path=os.path.join(os.path.dirname(__file__), "dataset.out")):
 	gbk_dataset = open(filenames_path, 'r')
 	gbk_names = [gbk_name.strip() for gbk_name in gbk_dataset]
 	gbk_files = [parse_genbank(path, gbk_name) for gbk_name in gbk_names]
@@ -88,7 +91,7 @@ def print_table(title, group_headers, column_headers, split_comparisons, label_w
 	
 	print()
 		
-def print_simple_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_intersection_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
 
 	for headerList, countList, out in table_data:
 	
@@ -105,7 +108,7 @@ def print_simple_tables(shuffled_iters, random_iters, table_data, label_width=6,
 						 label_width=label_width, 
 						 column_width=column_width)
 		
-def print_complex_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_alignment_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
 	
 	for headerList, countList, out in table_data:
 	
@@ -137,7 +140,6 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 							
 	mass_thresholds = [0.01, 0.001, 0.00001] *2
 	intensity_thresholds = [0.05, 0.005] *3
-	intensity_thresholds = [0.05]
 
 	outs = ["matching_0.01Mass_0.05Inten", "matching_0.001Mass_0.005Inten", "matching_0.00001ppmMass_0.05Inten", 
 												"matching_0.01Mass_0.005Inten", "matching_0.001Mass_0.05Inten"]
@@ -163,12 +165,19 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 	
 	table_printer(shuffled_iters, random_iters, table_data)
 
-def simple_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_simple_tables)
-	
-def alignment_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_complex_tables)
+def intersection_experiment(shuffled_iters=5, random_iters=5):
+	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_intersection_tables)
 
+def simple_experiment(shuffled_iters=5, random_iters=5):
+	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
+		compare.compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.SIMPLE_SCORE)
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables)
+	
+def p2p_experiment(shuffled_iters=5, random_iters=5):
+	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
+		compare.compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.P2P_SCORE)
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables)
+	
 def main():
 	s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
 	g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]

@@ -145,10 +145,6 @@ def main():
 
 	path = os.path.join(os.path.dirname(__file__), "spectraData")
 	
-	tests()
-	
-	mibig_parser()
-	
 	#SecArgGlnPheArgIle
 	#...223959.ms
 	#prev settings: 

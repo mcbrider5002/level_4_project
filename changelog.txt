@@ -1,3 +1,11 @@
+Tests written for parts of NRP2Path and RiPP2Path.
+Some changes made to experiment.py and ripp2path.py in order to facilitate unit testing. Need changes to comparisons.py in the same vein.
+Some changes to made to main.py to run experiments from there.
+Rewrite of svm_dict to greatly simplify.
+expand_tag_notation properly implemented.
+
+---
+
 Tests written for spectra and genbank packages. Only one missing (function needs refactoring anyway). Should be fully operational.
 Various cleanup to spectra and genbank packages.
 

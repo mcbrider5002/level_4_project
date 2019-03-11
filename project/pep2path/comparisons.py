@@ -9,7 +9,7 @@ from collections import Counter
 
 from .masstables import kersten_names, kersten_alphabet, AA_names, AA_alphabet
 	
-'''Given a twice nested list, returns a new list with the internal structure and the elements themselves shuffled.'''
+'''Given a twice-nested list, returns a new list with the internal structure and the elements themselves shuffled.'''
 def shuffle_components(gbk_files):
 
 	reorder = lambda ls: random.sample(ls, len(ls))
@@ -21,12 +21,12 @@ def shuffle_components(gbk_files):
 	flattened = reorder(list(itertools.chain.from_iterable(itertools.chain.from_iterable(gbk_files))))
 	return reimpose_structure(reimpose_structure(flattened, cds_numbers), gbk_numbers)
 	
-'''Given a nested list where internal lists represent genbank files and their contents are their unique components, 
+'''Given a nested list where internal lists represent genbank files containing CDSes containing their unique components, 
 	rearranges all the inner lists (files) and then randomly selects an animo acid to replace each of those components
 	before filtering them to be unique again.'''
-def randomise_components(gbk_components):
+def randomise_components(gbk_components, alphabet=AA_alphabet):
 	gbk_components = random.sample(gbk_components, len(gbk_components)) #change order of files to be random
-	return [[[AA_names[str(random.choice(list(AA_names.keys())))] for component in cds] for cds in gbk] for gbk in gbk_components] #randomise all components
+	return [[[str(random.choice(list(alphabet))) for component in cds] for cds in gbk] for gbk in gbk_components] #randomise all components
 	
 '''Given a nested list where internal lists represent a mass spectrum and their contents are their unique components,
 	and a nested list where internal lists represent genbank files and their contents are their unique components,
@@ -109,44 +109,23 @@ small_classes = ['val,leu,ile,abu,iva',
 
 '''Creates a doubly-nested dictionary that maps a pair of amino acids to whether their product class matches, based on the classes used in the original Pep2Path.'''
 def svm_class_matcher():
-	get_alphabet = lambda classes : set(itertools.chain.from_iterable([c.split(',') for c in classes]))
-	alphabet = set(itertools.chain.from_iterable([value for key, value in three_classes.items()])) & get_alphabet(big_classes) & get_alphabet(small_classes)
-	class_normaliser = lambda classes : [set(prod_class.split(',')) for prod_class in classes]
-	create_lookup = lambda classes, text : {ele:{other_ele:text for other_ele in (c - set(ele))} for c in classes for ele in c}
-	
-	dict = create_lookup([set([ele for ele in c]) for c_name, c in three_classes.items()], "three_class_match")
-	big_dict = create_lookup(class_normaliser(big_classes), "big_class_match")
-	small_dict = create_lookup(class_normaliser(small_classes), "small_class_match")
-	
-	big_alphabet = itertools.chain.from_iterable([c.split(',') for c in big_classes])
-	small_alphabet = itertools.chain.from_iterable([c.split(',') for c in small_classes])
-	
-	for aa in big_alphabet:
-		if(not aa in dict): dict[aa] = {}
-		inner_dict = dict[aa]
-		inner_dict.update(big_dict.get(aa, {}))
-		
-	for aa in small_alphabet:
-		if(not aa in dict): dict[aa] = {}
-		inner_dict = dict[aa]
-		inner_dict.update(small_dict.get(aa, {}))
-		
+	dict = {comp1 : {comp2 : 0.25} for cls, cls_items in three_classes.items() for comp1, comp2 in itertools.combinations(cls_items, 2)}
+	dict.update({comp1 : {comp2 : 0.5} for cls_items in big_classes for comp1, comp2 in itertools.combinations(cls_items.split(','), 2)})
+	dict.update({comp1 : {comp2 : 0.75} for cls_items in small_classes for comp1, comp2 in itertools.combinations(cls_items.split(','), 2)})
 	for aa, inner_dict in dict.items(): inner_dict[aa] = "exact_match"
-	
 	return dict
+	
+'''Dict to use for unknown components.'''
+def svm_default_dict(component):
+	return {component: 1.0}
 
-'''Returns 1 on exact match, 0 otherwise.'''
+'''Returns 1 on exact match, 0 otherwise. M_lookup isn't used - we just want to fix the length of parameter lists.'''
 def exact_match_I(M, A, M_lookup):
 	return 1.0 if M == A else 0.0
 
 '''Returns an SVM I-value according to the rules in the original Pep2Path.'''
-def svm_I(M, M_lookup):
-	match = M_lookup.get(M.lower(), "N/A")
-	return 0.0 if match == "N/A" else (
-		   0.25 if match == "three_class_match" else (
-		   0.5 if match == "big_class_match" else (
-		   0.75 if match == "small_class_match" else 
-		   1.0 if match == "exact_match" else 0)))
+def svm_I(M, M_lookup=svm_class_matcher()):
+	return M_lookup.get(M.lower(), 0.0)
 
 six_classes = {
 		"aliphatic": ["Ala", "Ile", "Leu", "Met", "Val"],
@@ -170,6 +149,10 @@ def six_class_matcher():
 	Value is 1 for an exact match, 0.5 for a class match, 0 otherwise.'''
 def six_class_I(M, A, M_lookup):
 	return M_lookup.get(M, 0.0)
+	
+'''Dict to use for unknown components.'''
+def six_class_default_dict(component):
+	return {component: 1.0}
 	
 def create_pdict():
 	with open("NRP_aa.txt", 'r') as file:
@@ -232,10 +215,10 @@ def compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, alphabet=AA_a
 		for ordering in orderings:
 			for (spectrum_name, spectrum) in zip(spectra_names, spectra_tags):
 			
-				spectrum_lookups = [[svm_dict.get(component.lower(), {component:"exact_match"}) for component in spectrum]]
+				spectrum_lookups = [[svm_dict.get(component.lower(), svm_default_dict(component.lower())) for component in spectrum]]
 				Is = [svm_I]
 			
 				new_score = scoring_method(spectrum, spectrum_lookups, list(itertools.chain.from_iterable(ordering)), alphabet, Is, pdict, c, x, reg)
-				best_score = max(best_score, (spectrum_name + " " + str(spectrum), gbk_name + " " + str(ordering), new_score), key=lambda t: t[2])
+				best_score = max(best_score, ((spectrum_name + " " + str(spectrum), gbk_name + " " + str(ordering)), new_score), key=lambda t: t[2])
 				
 	return best_score
