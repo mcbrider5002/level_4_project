@@ -100,16 +100,16 @@ This quite quickly runs into problems, as with the addition of each component to
 For example, if we consider the relatively limited case of the twenty \textit{proteinogenic} (those involved in the synthesis of proteins, essential for organic life) amino acids and a peptide of length 4, there are \(20^4\) possible combinations... Around 160,000! We would then have to identify which, if any, of these have useful properties.
 
 Without some heuristic (for example being able to infer properties from chemical composition), an exhaustive search of the chemical space is impossible.
-Instead we identify biological products produced in the wild, by living organisms - so-called \textit{'natural products'.}
+Instead we identify biological products produced in the wild, by living organisms - so-called \textit{'natural products'}, which have seen a recent resurgence in study. \cit{natural}
 From an evolutionary perspective, we expect that if organisms are expending resources on producing a particular biological product, then it confers a survival advantage.
 For example, a strain of bacteria might produce an antibiotic that kills another competitor species of bacteria - which we can then use ourselves to kill a potentially deadly strain of bacteria.
-Natural products produced in this way to fulfil an auxiliary function not directly related to the growth or reproduction of the organism are known as \textit{'secondary metabolites'.}
+Natural products produced in this way to fulfil an auxiliary function not directly related to the growth or reproduction of the organism are known as \textit{'secondary metabolites'.} \cit{metabolomics}
 
 To identify potentially interesting natural products we could, for example, analyse chemical structure for similarity to other interesting compounds, or by observing similar behaviour across several species which produce a particular product. 
 However, we also want to match this natural product to the gene cluster - a Biosynthetic Gene Cluster, henceforth \textbf{BGC} - which encodes it.
 One way of achieving this is to cluster together species that share a BGC and produce the natural product in question - this is a good indication that the pattern is meaningful and the BGC produces the natural product.
 
-\textbf{Mass spectrometry} allows us to identify the chemical composition of compounds - by breaking up molecules and then measuring the mass lost, we can infer the \textit{potential} composition of a compound by the masses of its components using a mass-translation table. Mass spectrometry readings, or amino acid sequences, are one of the key inputs to Pep2Path, which provides two algorithms, for two different natural product classes: Non-Ribosomal Peptides (henceforth \textbf{NRPs}) and Ribosomally-synthesized and Post-translationally-modified Peptides (henceforth \textbf{RiPPs}). 
+\textbf{Mass spectrometry} allows us to identify the chemical composition of compounds - by breaking up molecules and then measuring the mass lost, we can infer the \textit{potential} composition of a compound by the masses of its components using a mass-translation table. Mass spectrometry readings, or amino acid \textbf{sequence tags} (short listings of consecutive compounds), are one of the key inputs to Pep2Path. Although there are many classes of natural product for which mass spectrometry can be used effectively, \cit{msomics} here we focus on two particular classes, for which Pep2Path provides an algorithm each: Non-Ribosomal Peptides (henceforth \textbf{NRPs}) and Ribosomally-synthesized and Post-translationally-modified Peptides (henceforth \textbf{RiPPs}). 
 
 The other key input to each of the two Pep2Path algorithms is the gene sequence we are attempting to match our compound to. As their name suggests, RiPPs are synthesised by \textit{ribosomes}, the cell organelle responsible for translating gene sequences to proteins and then modified post-translation by enzymes. As a result, they are precisely encoded in an organism's gene sequence and and we can retrieve their composition directly, as Pep2Path does, by obtaining their \textbf{'six translation frames'} (the six ways the gene sequence can be potentially be read). NRPs, by contrast, are instead synthesised by Non-Ribosomal Peptide Synthetases (henceforth \textbf{NRPSes}) which are independent of the ribosome and can introduce non-proteinogenic amino acids. These consist of several NRPS modules which form an assembly-line of amino acids, and are controlled by three domains - \textit{A (Adenylation)}, \textit{T (Thiolation)} and \textit{C (Condensation)}. Of particular interest to us is the \textit{Adenylation} domain, which controls which substrate is added to the chain of amino acids. These are not directly encoded into the gene and are therefore harder to predict, so we rely on an external tool - \textbf{antiSMASH} \cit{as4} - for this purpose.
 
@@ -144,7 +144,7 @@ Machine learning is frequently used in bioinformatics to extrapolate underlying 
 
 \subsection{RiPPs, their six-frame translation and RiPPQuest} \label{ripps}
 
-For RiPPs, the translation process is more direct than with NRPs, and does not require an external platform like antiSMASH to make substrate predictions. This process can be done via the 'six-frame translation'. DNA strands are made of long strings of four bases \textit{(Adenine, Glycine, Thymine and Cytosine)} which can easily be represented and processed in computer systems in large numbers, and which bind in A-T and G-C pairs across the two strands. These bases, in groups of three known as \textit{codons}, reliably encode amino acids in ways we can extract. However, when looking at a genome, we do not know where the first codon begins - it could begin at any of three positions. Then, the encoding could be done by either strand - we only store one strand, but we can retrieve its reverse complement by converting the base to its corresponding base and reversing the strand - for a total of six different encodings. This is the six-frame translation method we use for RiPPs.
+For RiPPs, the translation process is more direct than with NRPs, and does not require an external platform like antiSMASH to make substrate predictions. This process can be done via the 'six-frame translation'. DNA strands are made of long strings of four \textit{nucleotide} bases \textit{(Adenine, Glycine, Thymine and Cytosine)} which can easily be represented and processed in computer systems in large numbers, and which bind in A-T and G-C pairs across the two strands. These bases, in groups of three known as \textit{codons}, reliably encode amino acids in ways we can extract. However, when looking at a genome, we do not know where the first codon begins - it could begin at any of three positions. Then, the encoding could be done by either strand - we only store one strand, but we can retrieve its \textit{reverse complement} by converting the base to its corresponding base and reversing the strand - for a total of six different encodings. This is the six-frame translation method we use for RiPPs.
 
 Among RiPPs, there are many subtypes. One particular subclass of interest is the lanthipeptide, which is specifically targeted by the bioinformatics software RiPPQuest. \cit{rippq} A successor to the original Peptidogenomics paper, the RiPPQuest method centres on the prediction of the \textit{'LANC-like'} domain in the genome, which is important for the biosynthesis of lanthipeptides in particular. It then centres its translation window around the LANC-like domain and begins searching using the six translation frames. 
 
@@ -260,21 +260,19 @@ We list functional requirements here using the MoSCoW method, and then non-funct
 
 \section{Software Structure}
 
+\textbf{<note to include diagram illustrating package structure>}
+
 \section{Algorithms}
 
 \textbf{<note that throughout we use arbitrary user-provided mass-tables>}
 
-\subsection{Mass Spectrum Dereplication}
+\subsection{Mass Spectra Dereplication}
 
-The input to the \textit{de novo} mass spectrometry algorithm is a list of mass spectrometry readings, each with a mass value and an intensity value. First, we preprocess them to remove all low-intensity readings, according to some user-chosen threshold (perhaps 5\% of the maximum value), and sort them so that they are increasing order of mass. Then, we want to find gaps in the masses that correspond to the masses in some table of compounds (with some tolerance, either percentile or absolute). Then we want to find all sequences of masses where one mass begins on a peak as another ends, with no subsequences. This is just a matter of comparing masses then checking if they lie within some threshold.
+The input to the \textit{de novo} mass spectrometry algorithm is a list of mass spectrometry readings, each with a mass value and an intensity value, where mass gaps represent a potential compound. We then want to convert these values into \textit{sequence tags}, end-to-end lists of possible components. (That is, in a sequence tag, each component must have its gap begin where the previous gap ended.) 
 
-We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a graph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers. Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph.
+Therefore, first, we preprocess our peaks to remove all low-intensity readings, according to some user-chosen threshold (perhaps 5\% of the maximum value in a spectrum, for example), and sort them so that they are increasing order of mass. We then want to find gaps in the masses that correspond to the masses in some table of compounds (with some tolerance, either percentile or absolute) and find all end-to-end sequence tags from this.
 
-We partition this algorithm into two stages: edge discovery and path discovery. Edge discovery is the process of searching the raw numerical mass values of each peak for gaps corresponding to components in the mass table, in order to build the graph's edge set. Path discovery is then traversing the edges in the edge set in order to form a complete path - and therefore a sequence tag.
-
-To perform edge discovery, we begin by allowing a value to be specified for a mass tolerance. This might be a static value measured in \textit{Da} (Unified Atomic Mass Unit or Dalton), a percentage applied to each mass in the mass table, or a percentage of the maximum mass in the spectra readings. We can then tranform each mass in the mass table into an interval \((mass - mass_tolerance, mass + mass_tolerance)\). Finally, we iterate through each reading, and subtract it from subsequent readings. If the result lies within the interval, then an edge exists between the peaks with a label corresponding to the compound which the interval belongs to. We repeat this for all values in the mass table in order to find all possible edges.
-
-To perform path discovery
+We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a digraph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers. (There may be multiple topological orderings - for example consider the case where there are multiple \textit{sources} - nodes with no ingoing edges - in the graph. Either could be labelled as the first node! We specifically use an ordering by increasing mass and direct edges towards higher masses.) Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph.
 
 \begin{figure}
     \centering
@@ -286,20 +284,42 @@ To perform path discovery
     \label{fig:peak_graph}
 \end{figure}
 
+We partition this algorithm into two stages: \textbf{edge discovery} and \textbf{path discovery}. Edge discovery is the process of searching the raw numerical mass values of each peak for gaps corresponding to components in the mass table, in order to build the graph's edge set. Path discovery is then traversing the edges in the edge set in order to form a complete path - and therefore a sequence tag.
+
+To perform edge discovery, we begin by allowing a value to be specified for a mass tolerance. This might be a static value measured in \textit{Da} (Unified Atomic Mass Unit or Dalton), a percentage applied to each mass in the mass table, or a percentage of the maximum mass in the spectra readings. We can then tranform each mass in the mass table into an interval \((mass - mass\_tolerance, mass + mass\_tolerance)\). Finally, we iterate through each reading, and subtract it from subsequent readings. If the result lies within the interval, then an edge exists between the peaks with a label corresponding to the compound which the interval belongs to. We repeat this for all values in the mass table in order to find all possible edges.
+
+\textbf{<note to include edge discovery pseudocode>}
+
+To perform path discovery, we perform an exhaustive depth-first search for every peak in the vertex set. (A breadth-first search would also be possible but depth-first is conceptually simpler to understand.) First, we choose a vertex, and denote it our current vertex. So long as our current vertex has edges we haven't yet explored, we choose one of those edges, marking it as explored, and make the other vertex involved in the edge our current vertex, and push our previous vertex onto a stack. We continue this process until we reach a vertex with no unexplored edges. At this point we pop the vertex at the top of our stack, marking it as our current vertex and resume searching for edges. Once we have also exhausted our stack, we choose another vertex we have not already performed this process for, and repeat until we have exhausted all vertices, to get all possible sequence tags.
+
+There are a few obvious optimisations we can make on this process: firstly, we do not need to check for cycles as we normally might in our depth-first search, as by definition our DAG has no cycles. Secondly, the solution space for our tags is very large - \(\sum_{len=1}^{n}{alphabet\_size^{len}}\) specifically, for all tags up to length \(n\), ignoring for now how these tags might be arranged along our peaks. Rather than storing each tag as we find it, we can instead store the longest tag containing this tag as a substring (we refer to such substrings as \textit{subtags} here). 
+
+This is done for two reasons: under normal circumstances, we assume if we have found an edge, then unless the data is exceptionally noisy the edge itself is likely meaningful, and furthermore any subtags can be reconstructed by taking n-grams of the parent tag. For each parent tag, this saves us having to store \(\dfrac{n}{2}(n+1)\) subtags. (Consider that a sliding window of length \(m\) has \(m-n+1\) possible alignments across a sequence tag of length \(n\), and that we wish to consider the sum of all \(1 \leq m \leq n\) and apply the standard formula for the sum of an arithmetic sequence.) For our algorithm, this means saving a sequence tag \textit{only if} we have exhausted all edges and we haven't just popped something from the stack. Additionally, if we visit a vertex as part of path discovery for another vertex, there is no need to begin a tag search beginning from that vertex - any tags discovered this way would be subtags of the tags we have already discovered.
+
+\textbf{<note to include path discovery pseudocode>}
+
+However, note that this is a relatively naive solution to a well-established problem. We include it here so as to have a complete, end-to-end software pipeline for NRP2Path, but due to our proposed modular structure, it would be relatively easy to replace it with another, more sophisticated mass-spectrometry module and still take advantage of Pep2Path. For example, an algorithm improving on ours by: using a scoring mechanism to measure the fit between a predicted sequence tag and the real data during edge discovery, eliminating impossible sequences early or by completely different approaches such as optimising a scoring function over the entire scoring space using a genetic algorithm or using a Hidden Markov Model. \cit{protointro}
 \textbf{<note to mention optimisations, such as those in the mass spectrometry book>}
 
 \subsection{NRPS2Path}
+
+\textbf{<note to include NRPS2Path pseudocode>}
+
 \textbf{<note to make it clear that we can check both directions of sequence tag in the NRPS algorithm by checking all module configurations against one sequence tag>}
 
 \subsection{RiPP2Path}
 
-This algorithm first reads in 
+This algorithm first takes as input a sequence tag to search for, and raw sequence data to search for it in (probably retrieved from a GenBank file). It then translates the raw sequence data into its six-frame translation by sampling the sequence and its reverse complement at starting indices 0, 1 and 2 and translating the bases into amino acids - the translation is done via standard tables, and we omit the details here. Then for each of these translation frames, we align the sequence tag with the frame for every possible position and score the match, using the number of exact matches between the two normalised by the tag length \(\dfrac{no\_matches}{len}\) as a simple scoring mechanism. We then sort our matches, best scores first, and report the strand and position (in nucleotides) for the \(nth\) best matches (we allow \(n\) to be supplied as a parameter). 
+
+\textbf{<note to include ripp2path pseudocode>}
 
 This algorithm bears some resemblance to brute-force string search, but whilst brute force string search searches for an exact match, this algorithm attempts to score every possible substring. We do this so as to provide as much information on the data as possible. For example, suppose that our search tag was one amino acid off, and we could not find it in the data. Then when attempting to find an exact match, we would only have a 'not found' result. But given this extra granularity, a near-total match would show up as the highest score found. 
 
 \textbf{<note: should i move (parts of) this somewhere? the comparison to our method is useful...>}
 
 However, as a result, this algorithm can't improve on the \(O(n^2)\) complexity of the most naive forms of brute-force string search (i.e. ones without early termination on the first mistmatch when aligning a substring with the query string), because improvements work by skipping some substrings. However, should we wish to search for exact matches, this is a solved problem with standard solutions, such as the linear-time Knuth-Morris-Pratt algorithm \cit{kmp}, the emprically performant Boyer-Moore algorithm \cit{boyer-moore} or algorithms such as hybrid KMP/BM algorithms. \cit{kmpbm} \cit{kmpbmtwo} String search algorithms such as these are also of more use in other areas of bioinformatics more generally as seen in the use of a hybrid KMP/Boyer-Moore in genome profiling in the recent PATSIM \cit{patsim} or an alternative exact string-searching algorithm TVSBS, \cit{tvsbs} designed specifically for biological sequence data. However, for most cases of exact string-matching GNU/Linux provides a standard, optimised implementation of Boyer-Moore as part of the \textit{grep} utility.
+
+Alternatively, since we are only searching for high scores, it would be possible to implement an algorithm that searches only for \textit{good} matches and skips bad matches by some means - suggesting how one might do this is beyond the scope of this paper, however. 
 
 %==================================================================================================================================
 \chapter{Implementation}
@@ -310,6 +330,12 @@ We chose to use Python for our implementation, as it is the \textit{lingua franc
 
 %==================================================================================================================================
 \chapter{Evaluation} 
+
+\textbf{unit tests}
+
+\textbf{scoring function test results}
+
+\textbf{original pep2path results(?)}
 
 %==================================================================================================================================
 \chapter{Conclusion}    
