@@ -208,6 +208,8 @@ The progam has to handle some very large search spaces, so efficiency is a conce
 
 \textbf{<note to explain some of the other requirements below>}
 
+\textbf{<note on the importance of an end-to-end method - justify why we would want to reinvent the wheel badly>}
+
 We list functional requirements here using the MoSCoW method, and then non-functional requirements separately.
 
 \subsection{Must Have}
@@ -216,7 +218,7 @@ We list functional requirements here using the MoSCoW method, and then non-funct
 
 \item A mass spectrometry tool capable of converting mass/intensity readings to sequence tags.
 \item Various small tools to be able to read in input data from standard file formats. Particularly, the ability to read the domain-standard antiSMASH-produced Genbank file formats.
-\item A software base allowing the integration of custom scoring functions.
+\item A software base allowing the integration of custom scoring functions, and allows the provision of custom mass tables/alphabets for the compounds being operated on.
 \item Implementation of a simpler BGC/mass-spectrometry comparison equivalent to taking the set intersection of the components in both, more suited to datasets with shorter sequence tags.
 \item A full implementation of NRP2Path.
 \item A suite of unit tests verifying the behaviour of the implementations of the various algorithms and improving future maintainability.
@@ -260,11 +262,25 @@ We list functional requirements here using the MoSCoW method, and then non-funct
 
 \section{Software Structure}
 
-\textbf{<note to include diagram illustrating package structure>}
+Examining our proposed software, a natural design for the software emerges. There are three important concerns: mass spectrometry, sequence handling, and the implementation of the two Pep2Path algorithms themselves, reliant on the two prior concerns. Therefore we propose a design to separate our software into corresponding packages. 
+
+\begin{figure}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/system_layout.png}}%
+
+    \caption{An illustration of our proposed system layout. We write input on the top of arrows, and output on the bottom.
+    }
+
+    \label{fig:system_layout}
+\end{figure}
+
+One module must handle the parsing of any relevant MS data file formats from our client's data, the extraction of sequence tags from such data and a possible accessory tool to plot the sequence tag along its corresponding spectrum. Another must handle the extraction of useful information from sequence data - that is, adenylation domain predictions and raw sequence data from antiSMASH-produced Genbank files, for NRP2Path and RiPP2Path respectively. Finally, the last module must have both of these as dependencies, and implement NRP2Path and RiPP2Path. Additionally, if a standalone CLI were to be implemented, this would then wrap around the outside of the software, treating the entire thing as a dependency.
+
+This design permits us to separate our implementation of Pep2Path itself from the data fed into it, whilst still providing an end-to-end implementation from raw MS data and antiSMASH data to match scoring. 
 
 \section{Algorithms}
 
-\textbf{<note that throughout we use arbitrary user-provided mass-tables>}
+During this section, we describe precisely the various algorithms we use for this project - note that for MS-dereplication and NRP2Path, we do not specify a mass table/alphabet respectively, and allow the user to provide this. In the case of mass spectra this is totally context-dependent on the molecules being fragmented - in the case of NRP2Path, different predictors may use different alphabets, and so different alphabets will be provided implicitly with the provision of different scoring functions.
 
 \subsection{Mass Spectra Dereplication}
 
@@ -272,7 +288,7 @@ The input to the \textit{de novo} mass spectrometry algorithm is a list of mass 
 
 Therefore, first, we preprocess our peaks to remove all low-intensity readings, according to some user-chosen threshold (perhaps 5\% of the maximum value in a spectrum, for example), and sort them so that they are increasing order of mass. We then want to find gaps in the masses that correspond to the masses in some table of compounds (with some tolerance, either percentile or absolute) and find all end-to-end sequence tags from this.
 
-We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a digraph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers. (There may be multiple topological orderings - for example consider the case where there are multiple \textit{sources} - nodes with no ingoing edges - in the graph. Either could be labelled as the first node! We specifically use an ordering by increasing mass and direct edges towards higher masses.) Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph.
+We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a digraph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers. \cit{msbook} (There may be multiple topological orderings - for example consider the case where there are multiple \textit{sources} - nodes with no ingoing edges - in the graph. Either could be labelled as the first node! We specifically use an ordering by increasing mass and direct edges towards higher masses.) Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph.
 
 \begin{figure}
     \centering
@@ -296,14 +312,16 @@ There are a few obvious optimisations we can make on this process: firstly, we d
 
 This is done for two reasons: under normal circumstances, we assume if we have found an edge, then unless the data is exceptionally noisy the edge itself is likely meaningful, and furthermore any subtags can be reconstructed by taking n-grams of the parent tag. For each parent tag, this saves us having to store \(\dfrac{n}{2}(n+1)\) subtags. (Consider that a sliding window of length \(m\) has \(m-n+1\) possible alignments across a sequence tag of length \(n\), and that we wish to consider the sum of all \(1 \leq m \leq n\) and apply the standard formula for the sum of an arithmetic sequence.) For our algorithm, this means saving a sequence tag \textit{only if} we have exhausted all edges and we haven't just popped something from the stack. Additionally, if we visit a vertex as part of path discovery for another vertex, there is no need to begin a tag search beginning from that vertex - any tags discovered this way would be subtags of the tags we have already discovered.
 
+\textbf{<note to include np-hardness of original problem in its most general form - I can reference the MS book for this>}
+
 \textbf{<note to include path discovery pseudocode>}
 
 However, note that this is a relatively naive solution to a well-established problem. We include it here so as to have a complete, end-to-end software pipeline for NRP2Path, but due to our proposed modular structure, it would be relatively easy to replace it with another, more sophisticated mass-spectrometry module and still take advantage of Pep2Path. For example, an algorithm improving on ours by: using a scoring mechanism to measure the fit between a predicted sequence tag and the real data during edge discovery, eliminating impossible sequences early or by completely different approaches such as optimising a scoring function over the entire scoring space using a genetic algorithm or using a Hidden Markov Model. \cit{protointro}
 \textbf{<note to mention optimisations, such as those in the mass spectrometry book>}
 
-\subsection{NRPS2Path}
+\subsection{NRP2Path}
 
-\textbf{<note to include NRPS2Path pseudocode>}
+\textbf{<note to include NRP2Path pseudocode>}
 
 \textbf{<note to make it clear that we can check both directions of sequence tag in the NRPS algorithm by checking all module configurations against one sequence tag>}
 
@@ -328,14 +346,22 @@ Alternatively, since we are only searching for high scores, it would be possible
 
 We chose to use Python for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options.
 
+\textbf{note to talk about itertools simplifying much of combinatorial maths involved - particularly much of the work of nrp2path can be reduced to two lines (three with optimisation)}
+
+\textbf{note to talk about use of numpy in mass spectrometry - standard methods for a lot of processing, and vectorisation in edge discovery specifically (this is not the performance bottleneck however) - we use a list of dictionaries for path discovery}
+
+\textbf{note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities}
+
 %==================================================================================================================================
 \chapter{Evaluation} 
 
-\textbf{unit tests}
+\textbf{<note to include unit tests - this proves not necessarily ultimate correctness, but that they adhere to certain invariants we expect from our conceptual understanding - particularly notable is the generation of synthetic data and the extraction of the correct pregenerated results from random noise, for all our algorithms>}
 
-\textbf{scoring function test results}
+\textbf{<note to include scoring function test results - we wish to demonstrate that the maximum value is for a perfect match, and that scores generally get worse as random mutations are introduced into >}
 
-\textbf{original pep2path results(?)}
+\textbf{<note to include original pep2path results(?) - this shows that we have a platform capable of implementing various kinds of scoring function, and our implementations themselves are (partially) correct but I may not have time to actually collect these results, so in this case I should just outline the procedure>}
+
+\textbf{note to refer back to requirements - such as implementation within the client's codebase - in order to justify why the project is a success}
 
 %==================================================================================================================================
 \chapter{Conclusion}    
