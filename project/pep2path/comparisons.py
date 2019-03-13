@@ -109,9 +109,9 @@ small_classes = ['val,leu,ile,abu,iva',
 
 '''Creates a doubly-nested dictionary that maps a pair of amino acids to whether their product class matches, based on the classes used in the original Pep2Path.'''
 def svm_class_matcher():
-	dict = {comp1 : {comp2 : 0.25} for cls, cls_items in three_classes.items() for comp1, comp2 in itertools.combinations(cls_items, 2)}
-	dict.update({comp1 : {comp2 : 0.5} for cls_items in big_classes for comp1, comp2 in itertools.combinations(cls_items.split(','), 2)})
-	dict.update({comp1 : {comp2 : 0.75} for cls_items in small_classes for comp1, comp2 in itertools.combinations(cls_items.split(','), 2)})
+	dict = {comp1 : {comp2 : 0.25} for cls, cls_items in three_classes.items() for comp1, comp2 in itertools.permutations(cls_items, 2)}
+	dict.update({comp1 : {comp2 : 0.5} for cls_items in big_classes for comp1, comp2 in itertools.permutations(cls_items.split(','), 2)})
+	dict.update({comp1 : {comp2 : 0.75} for cls_items in small_classes for comp1, comp2 in itertools.permutations(cls_items.split(','), 2)})
 	for aa, inner_dict in dict.items(): inner_dict[aa] = "exact_match"
 	return dict
 	
