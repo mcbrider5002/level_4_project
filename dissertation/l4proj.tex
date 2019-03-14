@@ -210,24 +210,23 @@ Unlike RiPPQuest, this algorithm is naively targeted and processes a score for e
 
 For this project, the supervisor acted as a client, proposing the software for eventual integration into a larger codebase, and due to greater domain experience provided requirements implicitly as the project progressed. 
 
-Firstly, we wanted a set of tools to implement the original Pep2Path functionality. This meant implementing NRP2Path and RiPP2Path. Secondly, the client had their own dataset for which the alignment comparison of NRP2Path might prove particularly cumbersome. This then meant being able to read the formats of the data available, and implement a simpler algorithm comparing the overlap between components. We also desired these implementations to be flexible with respect to future advances in bioinformatics and allow the integration of custom scoring functions, and to, as far as possible, allow space for future algorithms for other chemical classes to be implemented within the same framework, as we outlined in the introduction. (\ref{motivation}) In order to achieve this degree of flexibility, the software needs to be both loosely-coupled and transparent in design. We implement both of these described NRP-comparison algorithms both to solve the more proximal problem of extracting useful information from the client's dataset, and also to demonstrate the flexibility of our implementation and its potential for various algorithms to be incorporated within. Note however that while we also follow this procedure for scoring functions (i.e. we implement a trivial scoring function and the original Pep2Path scoring) producing a more up-to-date scoring function - for example one that takes advantage of the SANDPUMA predictor - is a research endeavour unto itself and is outwith the scope of this project - we only aim to provide a \textit{platform} for more modern techniques.
+Firstly, we wanted a set of tools to implement the original Pep2Path functionality. This meant implementing NRP2Path and RiPP2Path. Secondly, the client had their own dataset for which the alignment comparison of NRP2Path might prove particularly cumbersome. This then meant being able to read the formats of the data available, and implement a simpler algorithm comparing the overlap between components. We also desired these implementations to be flexible with respect to future advances in bioinformatics and allow the integration of custom scoring functions, and to, as far as possible, allow space for future algorithms for other chemical classes to be implemented within the same framework, as we outlined in the introduction. (\ref{motivation}) We implement both of these described NRP-comparison algorithms both to solve the more proximal problem of extracting useful information from the client's dataset, and also to demonstrate the flexibility of our implementation and its potential for various algorithms to be incorporated within. Note however that while we also follow this procedure for scoring functions (i.e. we implement a trivial scoring function and the original Pep2Path scoring) producing a more up-to-date scoring function - for example one that takes advantage of the SANDPUMA predictor - is a research endeavour unto itself and is outwith the scope of this project - we only aim to provide a \textit{platform} for more modern techniques.
 
 Furthermore, for Pep2Path to function, it requires both the previously-mentioned mass spectrometry and biological inputs to function. Logically, then, the software must be able to source this input from somewhere. Where the A-domain predictions are concerned, we outsource this work to antiSMASH as the original Pep2Path does - it is well-maintained and the leading piece of software in this area. Additionally, the client's data was already in antiSMASH-produced Genbank form - although this also contains the raw sequence data, accurately predicting A-domains is a problem unto itself, and entirely outside the scope of this project. Where RiPP2Path is concerned, it only takes raw sequence data - so in both cases, on the gene side of things, the software needs only parse antiSMASH-generated Genbank output.
 
 Mass spectrometry, however, is more complicated. We have data from mass spectra, but not sequence tags. This obviously creates a requirement to derplicate these spectra. However while this problem has been thoroughly studied (and continues to be thoroughly studied) and has an incredible breadth of software solutions available, the breadth of such solutions presents a challenge in itself, and hitherto much of the field has focused on protein-identification, \cit{msomics} as seen in software such as Mascot. \cit{mascot} Rather than trying to find a tool that best fits our needs, we instead propose that the software should have a simple \textit{de novo} mass spectrometry algorithm, focusing on no specific mass table. This violates the software engineering principle of software reuse, but eliminates the need for biochemistry research as a prerequisite, and potentially issues with of software licensing, allowing us to package Pep2Path as a standalone piece of software, with only the open-source antiSMASH as a dependency. Additionally, we can mitigate the effect of 'reimplementing the wheel badly' by having a modular structure such that the mass spectrometry component can be replaced by any implementation an interested party thinks would suit their use-case and the only real drawback in this case is processing speed.
 
-The software has to handle some very large search spaces, so efficiency \textit{is} a concern. However, the client had a preliminary stage of screening for data reducing the data our implementation would have to process. Additionally, it would also be run on powerful hardware dedicated to processing very large bioinformatics data, so whilst it was necessary for our implementation to be efficient enough to terminate in reasonable time (and not, say, have unnecessary orders of complexity included within algorithms), the absolute highest degree of efficiency was not an aim for this project. Particularly, we are interested in a reasonable running-time for \textit{Pep2Path}. This means not concerning ourselves overly with the efficiency of the mass spectrometry derplication - for which efficient algorithms are a different field of study.
+The software has to handle some very large search spaces, so efficiency \textit{is} a concern. However, the client had a preliminary stage of screening for data reducing the data our implementation would have to process. Additionally, it would also be run on powerful hardware dedicated to processing very large bioinformatics data, so whilst it was necessary for our implementation to be efficient enough to terminate in reasonable time (and not, say, have unnecessary orders of complexity included within algorithms), the absolute highest degree of efficiency was not an aim for this project. Particularly, we are interested in a reasonable running-time for \textit{Pep2Path}. This means not concerning ourselves overly with the efficiency of the mass spectrometry derplication - for which efficient algorithms are a different area of study.
 
 It is also important to note that RiPP2Path, while it is a desirable inclusion, is a rather simple accessory tool and is lower-priority than a full implementation of NRP2Path - the highest priority is to deliver an end-to-end \textit{flexible} implementation of NRP2Path to the client, and preferably, implement it in the client codebase, but the simplicity of RiPP2Path also makes it an easy inclusion. Some other useful features to include are (in descending order of significance); the ability to compare a group of spectra to a group of genomes and return some group-matching statistics; an accessory tool to plot the mass spectrum and visualise an identified sequence tag along it; and a CLI in order to run the program as a standalone application.
 
-Additionally, while the full method of RiPPQuest for collecting RiPPs from a genome is its own algorithm, orthogonal to anything we are implementing here, and we leave the complexities of this method to software like RiPPQuest - however, it might be possible, and relatively simple, to use the basic idea of restricting the genome to a subsection around a LANC-like domain for a lanthipeptide, offering faster and less noisy better predictions for this specific case of RiPP2Path with a simple alteration to the algorithm.
+Moreover, while the full method of RiPPQuest for collecting RiPPs from a genome is its own algorithm, orthogonal to anything we are implementing here, and we leave the complexities of this method to software like RiPPQuest - however, it might be possible, and relatively simple, to use the basic idea of restricting the genome to a subsection around a LANC-like domain for a lanthipeptide, offering faster and less noisy better predictions for this specific case of RiPP2Path with a simple alteration to the algorithm.
 
+While the top priority is to deliver functional software to the client, we also wish to contribute to the bioinformatics ecosystem more broadly. One of the major issues facing bioinformatics research is the necessity of two different fields of domain-specific knowledge - biology and computer science, and their associated subfields (organic chemistry, software engineering...). Although attempts are being made to more broadly disseminate the domain-specific knowledge necessary, \cit{msomics} solving these issues will likely require interdisciplinary efforts. Then for our software to \textit{meaningfully} contribute to the bioinformatics ecosystem, it should be accessible to outside experts. This means a clear and transparent design, and to use the established software tools where we use tools. Additionally, in order to be as accessible as possible, the software should be as platform-independent and as portable as possible. 
 
+These are some more advantages of using a simple home-brewed MS package in lieu of trying to find a specific tool - a lack of dependencies makes Pep2Path easier to configure and get started, and the design should be (in theory) clearer to an observer, especially when compared to proprietary software. antiSMASH, our only external dependency, is only supported for Linux and MacOS, but our intent is to rely on its output files rather than the software itself, where these files can be produced either on a compatible system, or by the web server version. End-users should be concerned as little as possible with the configuration of the software on their system.
 
-\textbf{<note that we want this to be usable by biologists>}
-\textbf{<note on portability>}
-
-\textbf{<note on unit tests and other means of correctness testing, original experiments>}
+Finally we wish to deliver a software that we can \textit{demonstrate} to be correct, and provide a baseline for which future additions to it can be measured against. For this reason we implement unitary testing across our implementation, where we demonstate adherance to some invariant that should in principle guarantee the implementation correctly maps from the design. As a practical test, to prove that scoring functions meet our expectations, we also implement some tests on synthetic - known - data to see if our scoring functions behave as we would expect. We additionally would preferably have software that can replicate the original experimental results of Pep2Path using the datasets they provide; this would allow us to show both that our implementation of the Pep2Path scoring mechanism was correct, but also that we have provided a platform that supports scoring functions such as Pep2Path's scorer.
 
 \section{Requirements}
 
@@ -243,6 +242,7 @@ In this section, we list functional requirements using the MoSCoW method, and th
 \item Implementation of a simpler BGC/mass-spectrometry comparison equivalent to taking the set intersection of the components in both, more suited to datasets with shorter sequence tags.
 \item A full implementation of NRP2Path.
 \item A suite of unit tests verifying the behaviour of the implementations of the various algorithms and improving future maintainability.
+\item Practical tests showing the behaviour of the scoring function.
 \end{itemize}
 
 \subsection{Should Have}
@@ -277,6 +277,7 @@ In this section, we list functional requirements using the MoSCoW method, and th
 \item Platform-independence (portability).
 \item Transparency of design.
 \item Reasonable efficiency - not a priority, especially where MS-dereplication is concerned, but the software should avoid wasting time where possible.
+\item Accessible to outside experts - using established tools where it is necessary to use tools.
 \end{itemize}
 
 %==================================================================================================================================
@@ -370,32 +371,40 @@ Alternatively, since we are only searching for high scores, it would be possible
 
 \section{Language Choice}
 
-We chose to use Python for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options.
+We chose to use Python for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options. 
 
-\textbf{note to talk about itertools simplifying much of combinatorial maths involved - particularly much of the work of nrp2path can be reduced to two lines (three with optimisation)}
+Additionally, like most modern high-level languages, Python is also platform-independent, so properly-written software can consequently be run without concern for platform, reaching more potential end-users.
 
-\textbf{note to talk about use of numpy in mass spectrometry - standard methods for a lot of processing, and vectorisation in edge discovery specifically (this is not the performance bottleneck however) - we use a list of dictionaries for path discovery}
+\textbf{<note to talk about itertools simplifying much of combinatorial maths involved - particularly much of the work of nrp2path can be reduced to two lines (three with optimisation)>}
 
-\textbf{note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities}
+\textbf{<note to talk about use of numpy in mass spectrometry - standard methods for a lot of processing, and vectorisation in edge discovery specifically (this is not the performance bottleneck however) - we use a list of dictionaries for path discovery>}
 
-\textbf{note to discuss ambiguities in original design, and how we implemented them}
+\textbf{<note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities>}
 
-\textbf{note to mention constant-time lookup tables for amino acid matches}
+\textbf{<note to discuss ambiguities in original design, and how we implemented them>}
 
-\textbf{note on how unit tests were implemented}
+\textbf{<note to mention constant-time lookup tables for amino acid matches>}
 
-\textbf{note on sequence tag notation, particularly the [A, B, C] case and how this affects default implementations of sequence tag comparison}
+\textbf{<note on how unit tests were implemented>}
+
+\textbf{<note on sequence tag notation, particularly the [A, B, C] case and how this affects default implementations of sequence tag comparison>}
+
+\textbf{<note to specify the the flexibility of scoring mechanisms via curried functions (to do)>}
+
+\textbf{<note on simplifying assumptions in Pep2Path, and particularly how alphabets affect things>}
+
+\textbf{<note to refer back to requirements for other things we implemented>}
 
 %==================================================================================================================================
 \chapter{Evaluation} 
 
 \textbf{<note to include unit tests - this proves not necessarily ultimate correctness, but that they adhere to certain invariants we expect from our conceptual understanding - particularly notable is the generation of synthetic data and the extraction of the correct pregenerated results from random noise, for all our algorithms>}
 
-\textbf{<note to include scoring function test results - we wish to demonstrate that the maximum value is for a perfect match, and that scores generally get worse as random mutations are introduced into >}
+\textbf{<note to include scoring function test results - we wish to demonstrate that the maximum value is for a perfect match, and that scores generally get worse as random mutations are introduced into - we also wish to show how it varies for different lengths of tag, and maybe how well we can predict things with unexpected alphabets?>}
 
 \textbf{<note to include original pep2path results(?) - this shows that we have a platform capable of implementing various kinds of scoring function, and our implementations themselves are (partially) correct but I may not have time to actually collect these results, so in this case I should just outline the procedure>}
 
-\textbf{note to refer back to requirements - such as implementation within the client's codebase - in order to justify why the project is a success}
+\textbf{<note to refer back to requirements - such as implementation within the client's codebase - in order to justify why the project is a success>}
 
 %==================================================================================================================================
 \chapter{Conclusion}    
