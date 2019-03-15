@@ -26,7 +26,7 @@
 %% METADATA
 \title{Pep2Path v2}
 \author{Ross McBride}
-\date{}
+\date{March 27, 2019}
 
 \maketitle
 
@@ -276,7 +276,7 @@ In this section, we list functional requirements using the MoSCoW method, and th
 \item Should maintain strong separation of concerns and loose coupling, so components can be reused.
 \item Platform-independence (portability).
 \item Transparency of design.
-\item Reasonable efficiency - not a priority, especially where MS-dereplication is concerned, but the software should avoid wasting time where possible.
+\item Reasonable efficiency - not a priority, especially where MS-sequencing is concerned, but the software should avoid wasting time where possible.
 \item Accessible to outside experts - using established tools where it is necessary to use tools.
 \end{itemize}
 
@@ -300,13 +300,13 @@ Examining our proposed software, a natural design emerges. There are three impor
 
 One module must handle the parsing of any relevant MS data file formats from our client's data, the extraction of sequence tags from such data and a possible accessory tool to plot the sequence tag along its corresponding spectrum. Another must handle the extraction of useful information from sequence data - that is, adenylation domain predictions and raw sequence data from antiSMASH-produced Genbank files, for NRP2Path and RiPP2Path respectively. Finally, the last module must have both of these as dependencies, receiving sequence tags from the spectra module and A-domain predictions and raw sequence data from the Genbank module, and then implement NRP2Path and RiPP2Path. Then, each of these modules should have its own set of tests. Additionally, if a standalone CLI were to be implemented, this would then wrap around the outside of the software, treating the entire Pep2Path and its dependencies as its own dependency.
 
-This design permits us to separate our implementation of the Pep2Path algorithms from the data fed into them, whilst still providing an end-to-end implementation from raw MS data and antiSMASH data to match scoring. For example, one would be able to entirely remove the MS package, replace it with another that provides the same interfaces and sequence tags as output (perhaps using a different algorithm for dereplication) and Pep2Path should function unchanged.
+This design permits us to separate our implementation of the Pep2Path algorithms from the data fed into them, whilst still providing an end-to-end implementation from raw MS data and antiSMASH data to match scoring. For example, one would be able to entirely remove the MS package, replace it with another that provides the same interfaces and sequence tags as output (perhaps using a different algorithm for MS-sequencing) and Pep2Path should function unchanged.
 
 \section{Algorithms}
 
-During this section, we describe precisely the various algorithms we use for this project - note that for MS-dereplication and NRP2Path, we do not specify a mass table/alphabet respectively, and allow the user to provide this. In the case of mass spectra this is totally context-dependent on the molecules being fragmented - in the case of NRP2Path, different predictors may use different alphabets, and so different alphabets will be provided implicitly with the provision of different scoring functions.
+During this section, we describe precisely the various algorithms we use for this project - note that for MS-sequencing and NRP2Path, we do not specify a mass table/alphabet respectively, and allow the user to provide this. In the case of mass spectra this is totally context-dependent on the molecules being fragmented - in the case of NRP2Path, different predictors may use different alphabets, and so different alphabets will be provided implicitly with the provision of different scoring functions.
 
-\subsection{Mass Spectra Dereplication}
+\subsection{Mass Spectra Sequencing}
 
 The input to the \textit{de novo} mass spectrometry algorithm is a list of mass spectrometry readings, each with a mass value and an intensity value, where mass gaps represent a potential compound. We then want to convert these values into all potential \textit{sequence tags}, end-to-end lists of possible components. (That is, in a sequence tag, each component must have its gap begin where the previous gap ended.) 
 
