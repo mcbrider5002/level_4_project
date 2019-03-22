@@ -28,24 +28,35 @@ def randomise_components(gbk_components, alphabet=AA_alphabet):
 	gbk_components = random.sample(gbk_components, len(gbk_components)) #change order of files to be random
 	return [[[str(random.choice(list(alphabet))) for component in cds] for cds in gbk] for gbk in gbk_components] #randomise all components
 	
+'''Given a tag in list form, normalise it for comparison.'''
+def normalise_tag(tag):
+	return [comp.lower() for comp in tag]
+	
+'''Given a gbk in list form, normalise it for comparison.'''
+def normalise_gbk(gbk):
+	return [comp.lower() for cds in gbk for comp in cds]
+
+'''Jaccard Similarity Index of components. Apply unique_components method and normalise first.'''
+def score_unique_components(spectrum, gbk):
+	comparisons = len(set(spectrum)) * len(set(gbk))
+	score = len(set(spectrum) & set(gbk)) / len(set(spectrum) | set(gbk))
+	return score, comparisons
+	
 '''Given a nested list where internal lists represent a mass spectrum and their contents are their unique components,
 	and a nested list where internal lists represent genbank files and their contents are their unique components,
 	and two lists of names where the names correspond to the files in each of these lists
 	returns several statistics based on comparisons of the unique components of these nested lists.'''
 def compare_unique_components(spectra_names, spectra, gbk_names, gbk_components):
 
-	#convert spectra tags to their unique components
-	spectra_components = [tags.unique_components() for tags in spectra if tags.unique_components() != []]
-
-	#flatten out cds (not relevant here) get rid of any duplicates
-	gbk_components = [list(set(itertools.chain.from_iterable(gbk))) for gbk in gbk_components] 
+	#get unique components
+	spectra_components = [normalise_tag(tags.unique_components()) for tags in spectra if tags.unique_components()]
+	gbk_components = [normalise_tag(list(set(itertools.chain.from_iterable(gbk)))) for gbk in gbk_components]
 
 	best_score = ("No spectrum!", "No gbk!", 0)
-	total_correct, total_comparisons, total_spectra, total_gbk_comp = 0, 0, 0, 0
+	score_sum, total_comparisons, total_spectra, total_gbk_comp = 0, 0, 0, 0
 	total_gbk_files = len(gbk_components)
 	
-	for spectrum in spectra_components:
-		total_spectra += len(spectrum)
+	total_spectra = sum([len(spectrum) for spectrum in spectra_components])
 	
 	for gbk_name, gbk in zip(gbk_names, gbk_components):
 	
@@ -53,16 +64,13 @@ def compare_unique_components(spectra_names, spectra, gbk_names, gbk_components)
 		if(len(gbk) == 0): continue
 		
 		for spectrum_name, spectrum in zip(spectra_names, spectra_components):
-			correct = 0
-			for component in spectrum:
-				total_comparisons += 1 
-				if(component.lower() in gbk or (component[0].upper() + component[:1].lower()) in gbk or component in gbk):
-					correct += 1
-			
-			total_correct += correct
-			best_score = max(best_score, (spectrum_name + " " + str(spectrum), gbk_name + " " + str(gbk), correct), key=lambda t: t[2])		
+		
+			score, comparisons = score_unique_components(spectrum, gbk)
+			total_comparisons += comparisons
+			score_sum += score
+			best_score = max(best_score, (spectrum_name + " " + str(spectrum), gbk_name + " " + str(gbk), score), key=lambda t: t[2])		
 					
-	return best_score, total_correct, total_comparisons, total_spectra, total_gbk_comp, total_gbk_files
+	return best_score, score_sum, total_comparisons, total_spectra, total_gbk_comp, total_gbk_files
 
 '''A naive matching scoring function that just counts the number of times seq1[i] == seq2[i] (if there's a choice '|', any of the possible options are acceptable).'''
 def simple_score(seq1, seq2):

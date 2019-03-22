@@ -61,7 +61,7 @@ def print_alignment(headers, counts, out):
 	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
 		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
 		
-def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=14):
+def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=18):
 
 	format_length = lambda l: "%-" + str(l) + "s"
 	column_no = len(column_headers)
@@ -91,7 +91,7 @@ def print_table(title, group_headers, column_headers, split_comparisons, label_w
 	
 	print()
 		
-def print_intersection_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_intersection_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=18):
 
 	for headerList, countList, out in table_data:
 	
@@ -108,7 +108,7 @@ def print_intersection_tables(shuffled_iters, random_iters, table_data, label_wi
 						 label_width=label_width, 
 						 column_width=column_width)
 		
-def print_alignment_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_alignment_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=18):
 	
 	for headerList, countList, out in table_data:
 	

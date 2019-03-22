@@ -21,4 +21,4 @@ class GenbankFile():
 		
 	'''Returns all unique components in the Genbank file.'''
 	def unique_components(self):
-		return list(set(itertools.chain.from_iterable([prediction.unique_components() for prediction in self.predictions])))
+		return list(set([comp for prediction in self.predictions for comp in prediction.unique_components()]))

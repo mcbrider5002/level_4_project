@@ -15,10 +15,10 @@ class CDSPrediction():
 	def decompose_tag(self):
 		return [split_item for split_item in self.overall_prediction.split('-') if split_item != ""]
 		
-	'''Returns a dictionary of counts of all unique components possibly in this predicted tag.'''
+	'''Returns a dictionary of counts of all unique components possibly in this predicted CDS.'''
 	def component_counts(self):
 		return Counter([s_comp for comp in self.decompose_tag() for s_comp in comp.split('|')])
 	
-	'''Gets all the unique components predicted to possibly be in the tag.'''
+	'''Gets all the unique components predicted to possibly be in the CDS.'''
 	def unique_components(self):
 		return list(self.component_counts().keys())
