@@ -73,8 +73,15 @@ def simple_alignment(s, g):
 def run_scoring_experiment():
 	
 	#intersection experiment
-	scores = scoring_experiment(score_unique_components, batch_size=10, length=20, mutations=100)
-	plot_results(scores, "Random Mutations Against Score, Jaccard Similarity", "jaccard.png", cmap='plasma')
+	def run_jaccard(b=8, length=4, mutations=100):
+		scores = scoring_experiment(score_unique_components, batch_size=b, length=length, mutations=mutations)
+		plot_results(scores, "Random Mutations Against Score, Jaccard Similarity, Length %d tag" % length, "jaccard%d.png" % length, cmap='plasma')
+	
+	run_jaccard(b=16, length=2, mutations=100)
+	run_jaccard(b=16, length=4, mutations=100)
+	run_jaccard(b=16, length=6, mutations=100)
+	run_jaccard(b=16, length=8, mutations=100)
+	run_jaccard(b=16, length=20, mutations=100)
 	
 	#simple alignment experiment
 	scores = scoring_experiment(simple_alignment, batch_size=10, length=4, mutations=100)
