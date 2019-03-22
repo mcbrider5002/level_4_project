@@ -5,6 +5,8 @@ from .comparisons import *
 from .experiment import *
 from .ripp2path import one_letter_AA, compare_ripp, ripp2path_scorer
 
+from . import scoringExperiment as compare
+
 '''Helper to generate a list of lists of random components.'''
 def generate_comp_lists(alphabet):
 	return [[str(random.choice(list(alphabet))) for length in range(random.randint(20, 40))] for number in range(random.randint(10, 20))]
@@ -24,7 +26,13 @@ def test_randomise_components(alphabet=AA_alphabet):
 	randomised = randomise_components(comps, alphabet)
 	assert comps != randomised and all([comp in alphabet for file in randomised for cds in file for comp in cds]), "randomise_components fails test!"
 	
-def test_compare_unique_components(alphabet=AA_alphabet):
+def test_score_unique_components(alphabet=AA_alphabet):
+	scoring_function = compare.score_unique_components
+	scores = compare.scoring_experiment(scoring_function, alphabet=AA_alphabet, length=random.randint(2, 8), batch_size=6, mutations=10)
+	original = scores[0]
+	assert original == sorted(scores, key=lambda t: t[3], reverse=True)[0], "compare_unique_components doesn't give an exact match the tied-highest score!"
+	
+def test_score_unique_components(alphabet=AA_alphabet):
 	pass
 	
 def test_simple_score(alphabet=AA_alphabet):
@@ -38,7 +46,7 @@ def test_simple_score(alphabet=AA_alphabet):
 	r_padder = lambda r : ["dummy" for i in range(random.randint(0, r))]
 	dummy_comps = r_padder(5) + [("dummy" if i in dummies else comp) for i, comp in enumerate(comps)] + r_padder(5)
 	
-	assert simple_score(comps, dummy_comps) == (length - no_dummies), "simple_score does not give the expected value!"
+	assert simple_score(comps, dummy_comps) == (length - no_dummies) / length, "simple_score does not give the expected value!"
 	
 def test_exact_match_I(alphabet=AA_alphabet):
 	aa = random.choice(list(AA_alphabet))
@@ -46,13 +54,10 @@ def test_exact_match_I(alphabet=AA_alphabet):
 	assert exact_match_I(aa, aa, {}) == 1, "exact_match_I doesn't evaluate to 1 on a match!"
 	assert exact_match_I(aa, None, {}) == 0, "exact_match_I doesn't evaluate to 0 on a mismatch!"
 	
-def test_SVM_I(alphabet=AA_alphabet):
-	pass
-	
-def test_six_class_I(alphabet=AA_alphabet):
-	pass
-	
 def test_alignment_score(alphabet=AA_alphabet):
+	pass
+	
+def test_score_alignment(alphabet=AA_alphabet):
 	pass
 	
 def test_compare_alignment(alphabet=AA_alphabet):

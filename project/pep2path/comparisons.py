@@ -36,7 +36,7 @@ def normalise_tag(tag):
 def normalise_gbk(gbk):
 	return [comp.lower() for cds in gbk for comp in cds]
 
-'''Jaccard Similarity Index of components. Apply unique_components method and normalise first.'''
+'''Jaccard Similarity Index of components. Apply unique_components method and normalise first. '''
 def score_unique_components(spectrum, gbk):
 	comparisons = len(set(spectrum)) * len(set(gbk))
 	score = len(set(spectrum) & set(gbk)) / len(set(spectrum) | set(gbk))
@@ -75,7 +75,7 @@ def compare_unique_components(spectra_names, spectra, gbk_names, gbk_components)
 '''A naive matching scoring function that just counts the number of times seq1[i] == seq2[i] (if there's a choice '|', any of the possible options are acceptable).'''
 def simple_score(seq1, seq2):
 
-	matches = [any([a in y.lower() for a in (x.lower().split('|'))]) for x, y in zip(seq1, seq2)].count(True)
+	matches = mean([any([a in y.lower() for a in (x.lower().split('|'))]) for x, y in zip(seq1, seq2)])
 	
 	if(len(seq1) == len(seq2)):
 		return matches 
@@ -228,5 +228,44 @@ def compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, alphabet=AA_a
 			
 				new_score = scoring_method(spectrum, spectrum_lookups, list(itertools.chain.from_iterable(ordering)), alphabet, Is, pdict, c, x, reg)
 				best_score = max(best_score, ((spectrum_name + " " + str(spectrum), gbk_name + " " + str(ordering)), new_score), key=lambda t: t[2])
+				
+	return best_score
+	
+def p2p_score_factory(alphabet=AA_alphabet, Is=[svm_I], pdict=create_svm_pdict(), svm_dict=svm_class_matcher(), c=1, x=0.01, reg=2):
+
+	def alignment_score(spectrum, genbank_ordering, alphabet, Is, pdict, c=1, x=0.01, reg=2):
+
+		spectrum_lookups = [[svm_dict.get(component.lower(), svm_default_dict(component.lower())) for component in spectrum]]
+		
+		I = lambda M, i: mean([I_func(M, lookups[i]) for I_func, lookups in zip(Is, spectrum_lookups)])
+		
+		s_ct = lambda M, a, i: math.log((P(a, pdict) + c * (I(M, i) ** reg + x * P(a, pdict)))
+							/ (P(a, pdict) * (1 + c * (sum([svm_class_matcher().get(M, {M:1}).get(A, 0) for A in alphabet]) ** reg + x))))
+		
+		def best_alignment(genbank_ordering, spectrum_tag):
+			score = sum([s_ct(M, a, i) for M, a, i in zip(genbank_ordering, spectrum_tag, range(len(genbank_ordering)))])
+			if(len(genbank_ordering) == len(spectrum_tag)):
+				return score 
+			elif(len(genbank_ordering) > len(spectrum_tag)):
+				return max(score, best_alignment(genbank_ordering[1:], spectrum_tag))
+			else:
+				return max(score, simple_score(genbank_ordering, spectrum_tag[1:]))
+
+		return best_alignment(genbank_ordering, spectrum_tag)
+		
+	return lambda s, g : alignment_score(s, g, alphabet, Is, pdict, c=1, x=0.01, reg=2)
+	
+
+def score_alignment(spectrum, gbk, scorer):
+	
+	best_score = 0
+	
+	mirror = lambda m : (m, list(reversed(m))) if (m != list(reversed(m))) else (m,)
+	products = itertools.product(*[mirror(cds) for cds in gbk])
+	orderings = [ordering for product in products for ordering in itertools.permutations(product, len(product))]
+		
+	for ordering in orderings:
+		new_score = scorer(spectrum, gbk)
+		best_score = max(best_score, new_score)
 				
 	return best_score

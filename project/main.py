@@ -5,6 +5,7 @@ from pep2path.spectra.drawSpectra import main as graph_main
 
 from pep2path.experiment import intersection_experiment, simple_experiment, p2p_experiment
 from pep2path.ripp2path import test_ripp2path
+from pep2path.scoringExperiment import run_scoring_experiment as scoring_experiment
 
 from pep2path.spectra.tests import tests as spectra_tests
 from pep2path.genbank.tests import tests as genbank_tests
@@ -23,10 +24,11 @@ def tests(args):
 def experiment(args):
 	exp_modes = {"intersection" : intersection_experiment,
 				 "simple" : simple_experiment,
-				 "nrp2path" : p2p_experiment}
+				 "nrp2path" : p2p_experiment,
+				 "score" : scoring_experiment}
 				 
 	if(len(args) > 0):
-		exp_modes.get(args[-1].lower(), lambda : print("Not a recognised type of experiment..."))()
+		exp_modes.get(args[-1].lower(), lambda : print("Not a recognised type of experiment... Try: " + ", ".join(exp_modes.keys())))()
 	else:
 		intersection_experiment()
 	
