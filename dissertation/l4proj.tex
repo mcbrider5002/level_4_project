@@ -52,8 +52,8 @@
 % Please note that you are under no obligation to sign 
 % this declaration, but doing so would help future students.
 %
-%\def\consentname {My Name} % your full name
-%\def\consentdate {20 March 2018} % the date you agree
+\def\consentname {Ross McBride} % your full name
+\def\consentdate {27 March 2019} % the date you agree
 %
 \educationalconsent
 
@@ -354,17 +354,21 @@ However, perhaps most interestingly, it has been known for quite some time that 
 
 \textbf{<note: small intro to what exactly the problem is, again>}
 
-In order to provide a simple scoring mechanism, we measure the overlap between the component subpredictions in a sequence tag, \(T\) and gene cluster \(C\). We treat both of these as sets, and use the Jaccard Similarity Index shown in equation \ref{eq:jaccard} to measure their similarity. This has a number of nice properties; for one, it is simple and can be used as an effective baseline for more complicated measures. Secondly, it is bounded by the interval \([0, 1]\), with 0 for no match and 1 for an exact match; this makes all scores immediately comparable without reference to details (i.e. we know scores close to 1 are always `good' scores). Thirdly, the score is normalised and weights each individual component less heavily in longer tags; this helps us discount very long tags with many mismatches but many matches (by random chance). Even if a tag contains a perfect match, it will get a lower score than other perfect matches without superfluous components.
+In order to provide a simple scoring mechanism, we measure the overlap between the component subpredictions in a sequence tag, \(T\) and gene cluster \(C\). We treat both of these as sets, and use the Jaccard Similarity Index shown in equation \ref{eq:jaccard} to measure their similarity. This is a standard similiarity metric often used in document analysis, and has a number of nice properties; for one, it is simple and can be used as an effective baseline for more complicated measures. Secondly, it is bounded by the interval \([0, 1]\), with 0 for no match and 1 for an exact match; this makes all scores immediately comparable without reference to details (i.e. we know scores close to 1 are always `good' scores). Thirdly, the score is normalised and weights each individual component less heavily in longer tags; this helps us discount very long tags with many mismatches but also many matches (by random chance). Even if a tag contains a perfect match, it will get a lower score than other perfect matches without superfluous components. We adopt this method for these properties.
 
 \jaccard
 
-There are a few immediately restrictions on this method that should be mentioned, however. We note that this method does not account for repeated components; so if \textit{Glycine} appears twice in a tag, the score won't reflect this. Perhaps most importantly, it also does not account for ordering of the components sequence tags. Most sequence tags are quite small, so the effect of these biases should be minimal, especially in shorter data, where there will be fewer orderings, and less chance of repeated components. We attempt to overcome these limitations by the more complicated method of Pep2Path, but should one wish to extend this method, a simple solution to the problem of repeated components is the generalisation of the Jaccard Similarity Index for multisets. There may also be further inspiration in data science clustering applications, where Jaccard Similarity is commonly used. 
+There are a few immediate restrictions on this method that should be mentioned, however. We note that this method does not account for repeated components; so if \textit{Glycine} appears twice in a tag, the score won't reflect this. Perhaps most importantly, it also does not account for ordering of the components sequence tags. Most sequence tags are quite small, so the effect of these biases should be minimal, especially in shorter data, where there will be fewer orderings, and less chance of repeated components. We attempt to overcome these limitations by the more complicated method of Pep2Path, but should one wish to extend this method, a simple solution to the problem of repeated components is the generalisation of the Jaccard Similarity Index for multisets.
 
-In order to account for ordering, however, we do what Pep2Path does, and score alignments of sequence tags and gene clusters against one another. 
+In order to account for ordering, however, we do what Pep2Path does, and score alignments of sequence tags and gene clusters against one another.
+
+\textbf{note: simple score is hamming distance}
 
 \textbf{<note to include NRP2Path pseudocode>}
 
 \textbf{<note to make it clear that we can check both directions of sequence tag in the NRPS algorithm by checking all module configurations against one sequence tag>}
+
+Note that there are alternative metrics we could have used for this process; for example, for Jaccard similarity a suitable alternative might have been the Dice Coefficient, which is very similar but might justify itself by better empirical performance. Additionally rather than attempting an alignment scoring we might use Levenshtein distance, \cit{levenshtein} (perhaps normalised by tag length) which measures edit distance between two strings, for the operations insertion, deletion and substitution. Suppose a tag and a set of BGC predictions are identical, other than one component inserted directly in the middle. Then an alignment comparison will only be able to match half as many components (it will be displaced by one for all others) but the Levenshtein distance will only score one mismatch. If our data were to often miss or insert entire components, then the Levenshtein distance would be a much better predictor.
 
 \subsection{RiPP2Path}
 
@@ -411,14 +415,56 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 \textbf{<note on performance of algorithms>}
 
+\textbf{<note: would it be faster operating on strings? threads would help>}
+
+\textbf{<note: there are sklearn implementations of jaccard similarity, hamming distance, etc; these are implemented in C and so might be faster>}
+
 %==================================================================================================================================
 \chapter{Evaluation} 
 
+\section{Unit Tests}
+
 \textbf{<note to include unit tests - this proves not necessarily ultimate correctness, but that they adhere to certain invariants we expect from our conceptual understanding - particularly notable is the generation of synthetic data and the extraction of the correct pregenerated results from random noise, for all our algorithms>}
 
+\section{Scoring Functions}
 \textbf{<note to include scoring function test results - we wish to demonstrate that the maximum value is for a perfect match, and that scores generally get worse as random mutations are introduced into - we also wish to show how it varies for different lengths of tag, and maybe how well we can predict things with unexpected alphabets?>}
 
+There are three properties of our scoring functions we would like to demonstrate:
+\begin{enumerate}
+	\item That the function is bounded above by the score for an exact match.
+	\item That the function is generally decreasing as we move further away from an exact match.
+	\item That the function is proportional; i.e. if the tag being compared is longer, then a mismatch causes a larger drop in score than it would for a 		shorter tag.
+\end{enumerate}
+
+In order to test these properties, we designed an experiment. In order to test these properties, we start with an identical sequence tag and set of genbank predictions. Then we want to repeatedly randomly mutate one of these (the choice should be arbitrary; we choose to mutate the sequence tag because it's slightly easier to implement) and measure the score as we do so. This should be sufficient to demonstrate properties one and two - if we plot the results, we should see that the highest point is the first value, and that the graph trends down towards some baseline. In order to demonstrate property 3, we need to repreat this procedure multiple times for multiple different tag lengths and compare how many mutations it takes for the function to approximately reach its baseline (note that this process is random, so the basal value we converge to may be different).
+
+To carry out this procedure, firstly, we generate a synthetic sequence tag from a given alphabet. Then, we create an exact copy for for the Genbank predictions, which we partition at random into smaller blocks analogous to NRPS modules, rearrange these modules and for each module choose at random whether it should be reversed or not. This creates a set of Genbank predictions which is expected to be identical, and tests the rearrangement portions of scoring function for the alignment-based scoring functions. We then measure the score between these two pieces of synthetic data.
+
+From this set of genbank predictions, we generate \(b\) mutants, where \(b\) is an arbitrary parameter defining batch size.  A mutant of a tag is the tag with one randomly-chosen component replaced by another randomly-chosen component from its alphabet with uniform probability (it may be the same one; it depends on the size of the alphabet chosen, but we repeat this process so it should in general converge to produce mismatches). Then at each time step, we take the previous batch of mutants, and mutate them again to produce a set of mutants which randomly move progressively further from being a total match. We then plot these data. 
+
+\textbf{note for algorithmic layout of experimental procedure}
+
+For this procedure, there are four parameters: \textit{alphabet}, \textit{batch size}, \textit{number of mutations} and \textit{tag length}. \textit{Alphabet} defines the components we can draw from when randomly generating both the original tags and mutants; in general, this should have little effect other than that a small alphabet would have greater chance (with uniform probability) to draw the same amino acids repeatedly, and hence this procedure would not converge easily. For our experiments, we simply use the alphabet of proteinogenic amino acids.
+
+\textit{Batch size} defines how many mutants are generated at each stage. In order to make the trend clearer, we average the score of the mutants in each batch, and plot each average score as an individual point. So in general as batch size increases, these points should converge to their 'true' expected score values for that many mutations, and the graph should get 'smoother'. We try to use batch values of at least a few points and higher where we can, but there is an associated linear performance cost to doing so.
+
+The \textit{number of mutations} controls the total number of batches of mutations we generate; this must be long enough enough that we generate enough mutations to see the score decay to some baseline (and stay there), but it again has an associated linear performance cost. In general we aim for 100 mutations, which suffices to see the whole decay for shorter tags. We also attempt to keep this and batch size fixed within experiments conducted on a single scoring function, and fix the bottom of the axis to 0, for ease of comparison.
+
+\textit{Tag length} is simply the length of the tags (and all subsequent mutants) that we generate. This is necessary to demonstrate property 3; we vary this to see the decrease in score. It's worth noting that the proportionality effect will be compounded by the fact that as a tag gets longer, when choosing which component to mutate, then over time it is increasingly likely we will choose an element that we have already mutated, and thus is likely to already be a mismatch, and so our position in the tag space does not meaningfully move away from perfect match. In other words, for longer tags we are likely to take longer to converge at baseline and may converge at a higher point not only because of the result we expect, but also due to \textit{a bias in the testing procedure}. 
+
+This doesn't make our testing procedure infeasible, however; this effect becomes more pronounced as we go through more mutations, whereas proportionality should be observable throughout. We can determine if a scoring function is proportional by checking its behaviour \textit{at the start} and seeing how quickly it decays. In fact, while this effect becomes more pronounced overall for longer tags, it is \textit{less} pronounced towards the start, due to the fact that we are much more likely to pick a new component to mutate - it is only \textit{convergence} behaviour it affects, and this doesn't come into question for property 3. (And we are concerned with property 2 independently of tag length.)
+
+Alternatively, another experimental design would be to choose which component to mutate next deterministically, or to choose randomly but only choose components that haven't already been mutated. However, an exhaustive search of the scoring space is impossible - or at least very computationally expensive for longer tags, as it will be exponential with the size of the alphabet - so to take these approaches would be to encode certain assumptions about the order we perform mutations in. This bias is unlikely to matter, but we choose to avoid it in favour of exploring the scoring space more randomly at the cost of having a more meandering procedure. We \textit{do} still encode these assumptions to a certain extent by iteratively mutating the same group of mutants, but this enables us to 'walk' the scoring space, and have each group of mutants immediately comparable to the previous, so it is an acceptable compromise here.
+
+\textbf{note: results go here}
+
+Note also that checks on these properties can be implemented as unit tests for the scoring functions; we implement a check on property 1 by performing the iterative mutation process, taking the scores sorted in non-decreasing order by number of mutations, and then use a sorting algorithm to sort in non-increasing order of score; the first value should be the score for no mutations in this case. It would also be possible to enforce properties 2 (by iteratively generating certain mismatches in the tag and checking if the score decreases) and 3 (by performing the same process but instead comparing the drops in score between tag lengths as mismatches are added) but we do not currently implement these at this time.
+
+\section{Original Pep2Path Experiments}
+
 \textbf{<note to include original pep2path results(?) - this shows that we have a platform capable of implementing various kinds of scoring function, and our implementations themselves are (partially) correct but I may not have time to actually collect these results, so in this case I should just outline the procedure>}
+
+\section{Fulfilment of Project Requirements}
 
 \textbf{<note to refer back to requirements - such as implementation within the client's codebase - in order to justify why the project is a success>}
 
