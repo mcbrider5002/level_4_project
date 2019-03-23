@@ -10,3 +10,4 @@
 *.tar
 *.mgf
 *.log
+project/*.png
