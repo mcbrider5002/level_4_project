@@ -212,6 +212,8 @@ Unlike RiPPQuest, this algorithm is naively targeted and processes a score for e
 %==================================================================================================================================
 \chapter{Analysis/Requirements}
 
+In this section, we lay out the exact motivation for various proposed requirements of the software and their priority, and then go on to list these formally.
+
 \section{Problem Analysis}
 
 For this project, the supervisor acted as a client, proposing the software for eventual integration into a larger codebase, and due to greater domain experience provided requirements implicitly as the project progressed. 
@@ -289,9 +291,11 @@ In this section, we list functional requirements using the MoSCoW method, and th
 %==================================================================================================================================
 \chapter{Design}
 
+In this section, we lay out the high-level design features of the software, prior to any implementation details, describing both a proposed architecture and the algorithms used.
+
 \section{Software Structure}
 
-Examining our proposed software, a natural design emerges. There are three important concerns: mass spectrometry, sequence handling, and the implementation of the two Pep2Path algorithms themselves, reliant on the two prior concerns. Therefore we propose a design to separate our software into corresponding packages along these lines. 
+Examining our proposed software, we partition it into a design separated along a structure much the same as the one we have been describing Pep2Path in. There are three important concerns: mass spectrometry, sequence handling, and the implementation of the two Pep2Path algorithms themselves, reliant on the two prior concerns. Therefore we propose a design to separate our software into corresponding packages along these lines. 
 
 \begin{figure}
     \centering
@@ -312,13 +316,13 @@ This design permits us to separate our implementation of the Pep2Path algorithms
 
 During this section, we describe precisely the various algorithms we use for this project - note that for MS-sequencing and NRP2Path, we do not specify a mass table/alphabet respectively, and allow the user to provide this. In the case of mass spectra this is totally context-dependent on the molecules being fragmented - in the case of NRP2Path, different predictors may use different alphabets, and so different alphabets will be provided implicitly with the provision of different scoring functions.
 
-\subsection{Mass Spectra Sequencing}
+\subsection{Mass Spectra Sequencing} \label{msalgorithm}
 
 The input to the \textit{de novo} mass spectrometry algorithm is a list of mass spectrometry readings, each with a mass value and an intensity value, where mass gaps represent a potential compound. We then want to convert these values into all potential \textit{sequence tags}, end-to-end lists of possible components. (That is, in a sequence tag, each component must have its gap begin where the previous gap ended.) 
 
 Therefore, first, we preprocess our peaks to remove all low-intensity readings, according to some user-chosen threshold (perhaps 5\% of the maximum value in a spectrum, for example), and sort them so that they are increasing order of mass. We then want to find gaps in the masses that correspond to the masses in some table of compounds (with some tolerance, either percentile or absolute) and find all end-to-end sequence tags from this.
 
-We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a digraph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers.  (There may be multiple topological orderings - for example consider the case where there are multiple \textit{sources} - nodes with no ingoing edges - in the graph. Either could be labelled as the first node! We specifically use an ordering by increasing mass and direct edges towards higher masses.) Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph. \cit{msbook}
+We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a digraph with a topological ordering - that is, each vertex is enumerated and vertices can only have edges to vertices with higher numbers.  (There may be multiple topological orderings - for example consider the case where there are multiple \textit{sources} - nodes with no ingoing edges - in the graph. Either could be labelled as the first node! We specifically use an ordering by increasing mass and direct edges towards higher masses, labelling from \(1\) to \(n\).) Furthermore, edges have a label, which is a list of all potential compounds that could be between the peaks the vertices represent, and these edges and their labels are unknown, but discoverable. In this model, vertices are individual mass spectrometry readings (mass and intensity), and edges are potential compounds from gaps between mass peaks. The problem of finding a sequence tag then corresponds to finding a path through this graph. \cit{msbook}
 
 \begin{figure}
     \centering
@@ -332,9 +336,38 @@ We can formally model this problem as a \textbf{DAG} (Directed Acyclic Graph), a
 
 We partition this algorithm into two stages: \textbf{edge discovery} and \textbf{path discovery}. Edge discovery is the process of searching the raw numerical mass values of each peak for gaps corresponding to components in the mass table, in order to build the graph's edge set. Path discovery is then traversing the edges in the edge set in order to form a complete path - and therefore a sequence tag.
 
-To perform edge discovery, we begin by allowing a value to be specified for a mass tolerance. This might be a static value measured in \textit{Da} (Unified Atomic Mass Unit or Dalton), a percentage applied to each mass in the mass table, or a percentage of the maximum mass in the spectra readings. We can then tranform each mass in the mass table into an interval \((mass - mass\_tolerance, mass + mass\_tolerance)\). Finally, we iterate through each reading, and subtract it from subsequent readings. If the result lies within the interval, then an edge exists between the peaks with a label corresponding to the compound which the interval belongs to. We repeat this for all values in the mass table in order to find all possible edges.
+To perform edge discovery, we begin by allowing a value to be specified for a mass tolerance. This might be a static value measured in \textit{Da} (Unified Atomic Mass Unit or Dalton), a percentage applied to each mass in the mass table, or a percentage of the maximum mass in the spectra readings. First we iterate through the indices of mass peaks; for every mass peak, we subtract its mass value from the mass value of subsequent peaks, to create a table of mass differences. We then iterate through every compound in the mass table, first transforming its mass into an interval \((mass - mass\_tolerance, mass + mass\_tolerance)\) and then checking every mass difference to see if it lies within these bounds. If a mass difference \textit{does} lie within the interval, then an edge exists between the peaks with a label corresponding to the compound from which we made the interval. We repeat this for all values in the mass table in order to find all possible edges.
 
-\textbf{<note to include edge discovery pseudocode>}
+\begin{algorithm}
+    \DontPrintSemicolon
+    \KwData{$v$ A collection of pairs of mass, intensity readings. \;
+		 $mt$ A mass-tolerance. \;
+		 $it$ An intensity threshold. \;
+		 $mass\_table$ A table of compound masses}
+    \KwResult{$E$ A labelled edge set containing all edges between vertices and their labels\;}
+    \Begin{
+	$E \leftarrow {}$
+	$n \leftarrow |v|$\;
+	$v \leftarrow filter\_by\_intensity(v, it)$\;
+        $v \leftarrow sort\_by\_mass(v)$\;
+	\For{$1 \leq i \leq n-1$}{
+		$md \leftarrow []$\;
+		\For{$i \leq j \leq n$}{
+			$md[j-i] \leftarrow v[j] - v[i]$\;
+		}
+		\For{$label, mass \leftarrow mass\_table$}{
+			$minm, maxm \leftarrow (mass - m, mass + mt)$\;
+			\For{$i \leq j \leq n$}{
+				\If{$minm \leq md[j] \leq maxm$}{
+					append $(\{i, j\}, label)$ to $E$\;
+				}
+			}
+		}
+	}
+    }
+
+\caption{Edge Discovery Algorithm}\label{alg:EdgeDisc}
+\end{algorithm}
 
 To perform path discovery, we perform an exhaustive depth-first search for every peak in the vertex set. (A breadth-first search would also be possible but depth-first is conceptually simpler to understand.) First, we choose a vertex, and denote it our current vertex. So long as our current vertex has edges we haven't yet explored, we choose one of those edges, marking it as explored, and make the other vertex involved in the edge our current vertex, and push our previous vertex onto a stack. We continue this process until we reach a vertex with no unexplored edges. At this point we pop the vertex at the top of our stack, marking it as our current vertex and resume searching for edges. Once we have also exhausted our stack, we choose another vertex we have not already performed this process for, and repeat until we have exhausted all vertices, to get all possible sequence tags.
 
@@ -344,17 +377,21 @@ This is done for two reasons: under normal circumstances, we assume if we have f
 
 \textbf{<note to include path discovery pseudocode>}
 
-\textbf{<note: should i move (parts of) this somewhere? the comparison to our method is useful...>}
+Where theoretical performance is concerned, we expect edge discovery to be \(O(n^2)\): calculation of mass differences is i-1 operations for some mass peak \(0 < i < n\) and this process will be performed n-1 times; arithmetic sum gives us \(O(n^2)\) complexity. (The number of masses in the table is another multiplicative factor, but is effectively constant.) For path discovery, we shall not formally prove its complexity bound here (this is not the focus of this work), but we shall give a rough illustration: suppose there are edges between every peak and its subsequent peaks. (This is an unrealistic assumption in practise - this would suggest there is more noise than actual data!) Then it is possible to construct exactly one path of length \(m\) by choosing any \(m\) peaks from the whole set of \(n\) peaks. Therefore the number of paths must be \(\sum_{m=1}^m\binom{n}{m} = 2^{n} - 1\) - exponential in number of solutions. \footnote{This is a special case of the binomial theorem, \(\sum_{m=0}^{n}\binom{n}{m}x^{m}y^{n-m} = (x+y)^n\). Set both \(x\) and \(y\) to \(1\) and we have \(\sum_{m=0}^{n}{\binom{n}{m}} = 2^n\). Then subtract \(\binom{n}{0} = 1\) for \(\sum_{m=1}^{n}\) therefore \(2^n - 1\).} 
+
+However, for our restricted version where we do not consider subpaths, then consider that each \(m^{th}\) vertex may have a path to any of its subsequent \(m\) vertices. Normally, each connection like this would double the number of paths: for each path beginning at a vertex \(m\) with an incoming edge from vertex \(m'\), there would be another path beginning at \(m'\) and passing through \(m\). However, under our restriction, this second set of paths begins at \(m'\) is the only set counted: since it has an equal number of paths, this means that when we traverse an edge from one node to another node that has paths already in our 'path--set', and update this 'path--set' accordingly --- the number of paths remains constant. The only time the number of paths in the path--set increases under this restriction is when a node connects directly to a terminal node -- otherwise there exists subpaths that we are extending and therefore replacing by this process. Then for each node its number of paths with no subpaths is the number of terminal nodes which follow it; since in the worst-case non-terminal nodes and terminal nodes are a function of the total number of nodes \(n\), under this simplifying assumption this part of the algorithm should be \(O(n^2)\). (Alternatively, one can represent this problem as linear with the number of edges, but number of peaks is known \textit{a priori} whereas edges are not, so we choose to represent it by number of peaks\.)
+
+Therefore, under our simplifying assumption, we have \(O(n^2)\) complexity for the solution space problem with only one element in the mass table (not a very useful assumption). However, in noisy data, any path may still have up to \(alphabet_size\) labels, and therefore up to \(alphabet_size^n\) variations of the path for different labels. This is a very pessimistic estimation unless every mass in the table is very close together or the mass-tolerance is set unreasonably wide, but if masses are close then this can very quickly become problematic without necessarily coming close to this worst-case scenario. Leucine and Isoleucine have identical masses: so, purely for the sake of illustration, if we were to chain ten of these, there would be \(2^10 = 1024\) possible tags for one exact set of data. For Leucine and Isoleucine we chose to represent them as a single tag in our table when we used them in order to avoid this issue but this is something worth noting for noisy data, and mass tables with similar masses contained within.
 
 However, note again that this is a relatively naive solution to a well-established problem. We include it here so as to have a complete, end-to-end software pipeline for NRP2Path, but due to our proposed modular structure, it would be relatively easy to replace it with another, more sophisticated mass-spectrometry module and still take advantage of Pep2Path. For example, some approaches include: using a scoring mechanism to measure the fit between a predicted sequence tag and the real data during edge discovery, eliminating impossible sequences early or by completely different approaches such as optimising a scoring function over the entire scoring space using a genetic algorithm or using a Hidden Markov Model. \cit{protointro}
 
-However, perhaps most interestingly, it has been known for quite some time that finding the longest sequence tag is an instance of the \textit{Antisymmetric Longest Path Problem}, an NP-hard problem that is a variation of the \textit{Longest Path Problem} (the classical problem of finding the longest path in a graph, also NP-hard). \cit{protobook} (And therefore under the assumption that our result is not generated by noise, that it returns the true value.) However, recent work suggests both tighter bounds on the problem (and its inapproximability) \cit{alppbound} but also that under certain restrictions, a linear-time algorithm may be applied to solve the antisymmetric path problem (and particularly, has been tested on spectral data). \cit{alpplinear} With some fairly lax assumptions this potentially offers a massive theoretical performance improvement over our naive algorithm. Note, however, that our goal was primarily to implement \textit{Pep2Path} - mass spectrometry is neither a priority nor performance bottleneck, so we did not include such sophisticated algorithms in our design.
+However, perhaps most interestingly, one approach that has been used for quite some time is to construct a scoring graph and attempt to solve an instance of the \textit{Antisymmetric Longest Path Problem}, an NP-Hard problem that is a variation of the \textit{Longest Path Problem}, (the classical problem of finding the longest path in a graph, also NP-Hard). \cit{protobook} (And therefore under the assumption that our result is not generated by noise, that it returns the true value.) Recent work suggests both tighter bounds on the problem (and its inapproximability) \cit{alppbound} but also that under certain restrictions, a linear-time algorithm may be applied to solve the antisymmetric path problem (and particularly, has been tested on spectral data). \cit{alpplinear} With some fairly lax assumptions this potentially offers a means to discriminate between discovered tags, and massive theoretical performance improvement over our naive algorithm. Note, however, that our goal was primarily to implement \textit{Pep2Path} - mass spectrometry is neither a priority nor performance bottleneck, so we did not include such sophisticated algorithms in our design.
 
 \subsection{NRP2Path}
 
 \textbf{<note: small intro to what exactly the problem is, again>}
 
-In order to provide a simple scoring mechanism, we measure the overlap between the component subpredictions in a sequence tag, \(T\) and gene cluster \(C\). We treat both of these as sets, and use the Jaccard Similarity Index shown in equation \ref{eq:jaccard} to measure their similarity. This is a standard similiarity metric often used in document analysis, and has a number of nice properties; for one, it is simple and can be used as an effective baseline for more complicated measures. Secondly, it is bounded by the interval \([0, 1]\), with 0 for no match and 1 for an exact match; this makes all scores immediately comparable without reference to details (i.e. we know scores close to 1 are always `good' scores). Thirdly, the score is normalised and weights each individual component less heavily in longer tags; this helps us discount very long tags with many mismatches but also many matches (by random chance). Even if a tag contains a perfect match, it will get a lower score than other perfect matches without superfluous components. We adopt this method for these properties.
+In order to provide a simple scoring mechanism, we measure the overlap between the component subpredictions in a sequence tag, \(T\) and gene cluster \(C\). We treat both of these as sets, and use the Jaccard Similarity Index \cit{jaccard} shown in equation \ref{eq:jaccard} to measure their similarity. This is a standard similiarity metric often used in document analysis, and has a number of nice properties; for one, it is simple and can be used as an effective baseline for more complicated measures. Secondly, it is bounded by the interval \([0, 1]\), with 0 for no match and 1 for an exact match; this makes all scores immediately comparable without reference to details (i.e. we know scores close to 1 are always `good' scores). Thirdly, the score is normalised and weights each individual component less heavily in longer tags; this helps us discount very long tags with many mismatches but also many matches (by random chance). Even if a tag contains a perfect match, it will get a lower score than other perfect matches without superfluous components. We adopt this method for these properties.
 
 \jaccard
 
@@ -368,7 +405,7 @@ In order to account for ordering, however, we do what Pep2Path does, and score a
 
 \textbf{<note to make it clear that we can check both directions of sequence tag in the NRPS algorithm by checking all module configurations against one sequence tag>}
 
-Note that there are alternative metrics we could have used for this process; for example, for Jaccard similarity a suitable alternative might have been the Dice Coefficient, which is very similar but might justify itself by better empirical performance. Additionally rather than attempting an alignment scoring we might use Levenshtein distance, \cit{levenshtein} (perhaps normalised by tag length) which measures edit distance between two strings, for the operations insertion, deletion and substitution. Suppose a tag and a set of BGC predictions are identical, other than one component inserted directly in the middle. Then an alignment comparison will only be able to match half as many components (it will be displaced by one for all others) but the Levenshtein distance will only score one mismatch. If our data were to often miss or insert entire components, then the Levenshtein distance would be a much better predictor.
+Note that there are alternative metrics we could have used for this process; for example, for Jaccard similarity a suitable alternative might have been the Dice Coefficient, \cit{Dice} which is very similar but might justify itself by better empirical performance. Additionally rather than attempting an alignment scoring we might use Levenshtein distance, \cit{levenshtein} (perhaps normalised by tag length) which measures edit distance between two strings, for the operations insertion, deletion and substitution. Suppose a tag and a set of BGC predictions are identical, other than one component inserted directly in the middle. Then an alignment comparison will only be able to match half as many components (it will be displaced by one for all others) but the Levenshtein distance will only score one mismatch. If our data were to often miss or insert entire components, then the Levenshtein distance would be a much better predictor.
 
 \subsection{RiPP2Path}
 
@@ -378,9 +415,7 @@ This algorithm first takes as input a sequence tag to search for, and raw sequen
 
 This algorithm bears some resemblance to brute-force string search, but whilst brute force string search searches for an exact match, this algorithm attempts to score every possible substring. We do this so as to provide as much information on the data as possible. For example, suppose that our search tag was one amino acid off, and we could not find it in the data. Then when attempting to find an exact match, we would only have a `not found' result. But given this extra granularity, a near-total match would show up as the highest score found. 
 
-\textbf{<note: should i move (parts of) this somewhere? the comparison to our method is useful...>}
-
-However, as a result, this algorithm can't improve on the \(O(n^2)\) complexity of the most naive forms of brute-force string search (i.e. ones without early termination on the first mistmatch when aligning a substring with the query string), because improvements work by skipping some substrings. However, should we wish to search for exact matches, this is a solved problem with standard solutions, such as the linear-time Knuth-Morris-Pratt algorithm \cit{kmp}, the emprically performant Boyer-Moore algorithm \cit{boyer-moore} or algorithms such as hybrid KMP/BM algorithms. \cit{kmpbm} \cit{kmpbmtwo} String search algorithms such as these are also of more use in other areas of bioinformatics more generally as seen in the use of a hybrid KMP/Boyer-Moore in genome profiling in the recent PATSIM \cit{patsim} or an alternative exact string-searching algorithm TVSBS, \cit{tvsbs} designed specifically for biological sequence data. However, for most cases of exact string-matching GNU/Linux provides a standard, optimised implementation of Boyer-Moore as part of the \textit{grep} utility, and other operating systems provide similar tools.
+However, as a result, this algorithm can't improve on the \(O(mn)\) complexity of the most naive forms of brute-force string search (i.e. ones without early termination on the first mistmatch when aligning a substring with the query string), because improvements work by skipping some substrings. However, should we wish to search for exact matches, this is a solved problem with standard solutions, such as the linear-time Knuth-Morris-Pratt algorithm \cit{kmp}, the emprically performant Boyer-Moore algorithm \cit{boyer-moore} or algorithms such as hybrid KMP/BM algorithms. \cit{kmpbm} \cit{kmpbmtwo} String search algorithms such as these are also of more use in other areas of bioinformatics more generally as seen in the use of a hybrid KMP/Boyer-Moore in genome profiling in the recent PATSIM \cit{patsim} or an alternative exact string-searching algorithm TVSBS, \cit{tvsbs} designed specifically for biological sequence data. However, for most cases of exact string-matching GNU/Linux provides a standard, optimised implementation of Boyer-Moore as part of the \textit{grep} utility, and other operating systems provide similar tools.
 
 Alternatively, since we are only searching for high scores, it would be possible to implement an algorithm that searches only for \textit{good} matches and skips bad matches by some means - suggesting how one might do this is beyond the scope of this paper, however. 
 
@@ -389,7 +424,7 @@ Alternatively, since we are only searching for high scores, it would be possible
 
 \section{Language Choice}
 
-We chose to use Python for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options. 
+We chose to use Python (3) for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options. 
 
 Additionally, like most modern high-level languages, Python is also platform-independent, so properly-written software can consequently be run without concern for platform, reaching more potential end-users.
 
@@ -399,8 +434,6 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 \textbf{<note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities>}
 
-\textbf{<note to discuss ambiguities in original design, and how we implemented them>}
-
 \textbf{<note to mention constant-time lookup tables for amino acid matches>}
 
 \textbf{<note on how unit tests were implemented>}
@@ -409,15 +442,33 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 \textbf{<note to specify the the flexibility of scoring mechanisms via curried functions (to do)>}
 
-\textbf{<note on simplifying assumptions in Pep2Path, and particularly how alphabets affect things>}
+\textbf{choice operators}
+
+\textbf{<note to discuss ambiguities in original design, and how we implemented them>}
+
+\textbf{<note on simplifying assumptions in Pep2Path (I(AM), P(A)) , and particularly how alphabets affect things>}
 
 \textbf{<note to refer back to requirements for other things we implemented>}
 
-\textbf{<note on performance of algorithms>}
+\section{Performance}
 
-\textbf{<note: would it be faster operating on strings? threads would help>}
+Here we describe the empirical performance of our algorithms. The idea is not to give a precise benchmark (development and testing was performed on a relatively modest home machine - Intel Core i7-8550U Processor, 24GB RAM - where in practise we might use dedicated hardware) but rather to confront the algorithmic problems involved in development and attempt to measure a very rough timescale on which these algorithms perform in practise.
+
+Despite its theoretical performance constraints, peptide sequencing performs unexpectedly well in practise. We tested with a real dataset of 5770 files, some of which had up to 20000 mass peaks before filtering for intensity. We found that it was able to identify sequence tags of up to length 6 with intensity filtering for peaks with < 5\% of maximum intensity in the spectrum, and a mass tolerance of \(0.01\), or filtering 0.5\% intensity and with a mass tolerance of \(0.001\) in under a minute. With settings of a filter threshold of 5\% and \(0.01\) mass tolerance, the program began to explore length 12 tags seemingly endlessly, and we did not check to see if it would terminate: in practise, we do not expect sequence tags to be this long, so the settings were likely unrealistic in any case. 
+
+It is also worth noting that the runtime required was very unevenly distributed; most of it came from single, very large files (those with 20000 peaks). This is in line with what we would expect; in larger datasets, the worse than linear theoretical performance time becomes more of an encumbrance and stalls the entire process.
+
+This gives us very optimistic projections for simpler datasets. However, it is worth noting that we used a mass table of only the proteinogenic amino acids for these results; these have quite varied masses (other than Leucine/Isoleucine, which we combined into a single entry in the mass table); in fact with the mass tolerances we used it is impossible for an edge to have more than one label (given that Leucine and Isoleucine are one label) so the running time must be coming almost entirely either from edge discovery or from constructing paths themselves and not alternative labellings - as we explained in \ref{msalgorithm} this is the \textit{easy} part of the problem. Under conditions where mass tables contain similar values, this algorithm is likely to be wholly inappropriate and another approach - for example the Antisymmetric Path Problem approach \cit{msbook} - should be used instead.
+
+\textbf{note: ripp2path, jaccard nrp2path and other nrp2paths}
+
+\textbf{<note: use biology to cut down the solution space>}
+
+\textbf{<note: would it be faster operating on strings?>}
 
 \textbf{<note: there are sklearn implementations of jaccard similarity, hamming distance, etc; these are implemented in C and so might be faster>}
+
+Another possibility for improving the performance of NRP2Path would be to parallelise it, which is remarkably amenable to. For example, it would be easily possible to give each worker thread either a single pair of spectra and BGC to score, or a single ordering to score with the spectrum. This only offers performance linear with the number of parallel executions of the algorithm, and is dependent on the hardware available where the larger problem is largely algorithmic, but due to the ease of parallelisation this is a good next step.
 
 %==================================================================================================================================
 \chapter{Evaluation} 
