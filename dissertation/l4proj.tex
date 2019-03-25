@@ -22,7 +22,7 @@
 
 \newcommand{\jaccard}{
 	\begin{equation} \label{eq:jaccard}
-		S = \dfrac{|C\cup{T}|}{|C\cap{T}|}
+		S = \dfrac{|C\cap{T}|}{|C\cup{T}|}
 	\end{equation}
 }
 
@@ -439,9 +439,9 @@ Directly following from the fact that we compute a score for each assembly-block
 
 \begin{algorithm}
     \DontPrintSemicolon
-    \KwData{$T$ A sequence tag\;
-		 $G$ A list of gene predictions, partitioned into sublists where each represents an assembly block\;
-		 $score$ A scoring function}
+    \KwData{$T$ A sequence tag.\;
+		 $G$ A list of gene predictions, partitioned into sublists where each represents an assembly block.\;
+		 $score$ A scoring function.}
     \KwResult{$S$ A score for closeness of match between $T$ and $G$}
     \Begin{
 	$S \leftarrow -\infty$ \;
@@ -471,13 +471,41 @@ However, the theoretical complexity of the alignment comparisons are quite an is
 
 \subsection{RiPP2Path}
 
-This algorithm first takes as input a sequence tag to search for, and raw sequence data to search for it in (probably retrieved from a GenBank file). It then translates the raw sequence data into its six-frame translation by sampling the sequence and its reverse complement at starting indices 0, 1 and 2 and translating the bases into amino acids - the translation is done via standard tables, and we omit the details here. Then for each of these translation frames, we align the sequence tag with the frame for every possible position and score the match, using the number of exact matches between the two normalised by the tag length \(\dfrac{no\_matches}{len}\) as a simple scoring mechanism. We then sort our matches, best scores first, and report the strand and position (in nucleotide bases) for the \(nth\) best matches (we allow \(n\) to be supplied as a parameter). 
+This algorithm first takes as input a sequence tag to search for, and raw sequence data to search for it in (probably retrieved from a GenBank file). It then translates the raw sequence data into its six-frame translation by sampling the sequence and its reverse complement at starting indices 0, 1 and 2 and translating the bases into amino acids - the translation is done via standard methods, and we omit the details here. Then for each of these translation frames, we align the sequence tag with the frame for every possible position and score the match, using the number of exact matches between the two normalised by the tag length \(\dfrac{no\_matches}{len}\) as a simple scoring mechanism. (Our inverse Hamming Distance, again.) We then sort our matches, best scores first, and report the strand and position (in nucleotide bases) for the \(nth\) best matches (we allow \(n\) to be supplied as a parameter). 
 
-\textbf{<note to include ripp2path pseudocode>}
+\begin{algorithm}
+    \DontPrintSemicolon
+    \KwData{$G$ A genome sequence.\;
+		 $T$ A sequence tag.\;
+		 $translate$ A function to translate genome sequences into peptide sequences.\;
+		 $complement$ A function to translate genome sequences into their reverse complement.\;
+		 $score$ A scoring function; by default the normalised inverse Hamming Distance}
+    \KwResult{$S$ An ordered list of scores for matches between $T$ and $G$, with location relative to frame and frame on which they were found}
+    \Begin{
+	$S \leftarrow []$\;
+	$F \leftarrow []$\;
+	$n \leftarrow G.size$\;
+	$m \leftarrow T.size$\;
+	\For{$i \in [0, 1, 2]$}{
+		append translate(G[i..]) to F\;
+	}
+	\For{$i \in [0, 1, 2]$}{
+		append translate(complement(G[i..])) to F\;
+	}
+	\For{$f \in F$}{
+		\For{$0 \leq i \leq n-m$}{
+			append $(score(T, f[i..i+m]), i, f)$ to $S$\;
+		}
+	}
+	$S \leftarrow sort(S)$\;
+    }
+
+\caption{RiPP2Path}\label{alg:ripp2path}
+\end{algorithm}
 
 This algorithm bears some resemblance to brute-force string search, but whilst brute force string search searches for an exact match, this algorithm attempts to score every possible substring. We do this so as to provide as much information on the data as possible. For example, suppose that our search tag was one amino acid off, and we could not find it in the data. Then when attempting to find an exact match, we would only have a `not found' result. But given this extra granularity, a near-total match would show up as the highest score found. 
 
-However, as a result, this algorithm can't improve on the \(O(mn)\) complexity of the most naive forms of brute-force string search (i.e. ones without early termination on the first mistmatch when aligning a substring with the query string), because improvements work by skipping some substrings. However, should we wish to search for exact matches, this is a solved problem with standard solutions, such as the linear-time Knuth-Morris-Pratt algorithm \cit{kmp}, the emprically performant Boyer-Moore algorithm \cit{boyer-moore} or algorithms such as hybrid KMP/BM algorithms. \cit{kmpbm} \cit{kmpbmtwo} String search algorithms such as these are also of more use in other areas of bioinformatics more generally as seen in the use of a hybrid KMP/Boyer-Moore in genome profiling in the recent PATSIM \cit{patsim} or an alternative exact string-searching algorithm TVSBS, \cit{tvsbs} designed specifically for biological sequence data. However, for most cases of exact string-matching GNU/Linux provides a standard, optimised implementation of Boyer-Moore as part of the \textit{grep} utility, and other operating systems provide similar tools.
+However, as a result, this algorithm can't improve on the \(O(mn)\) complexity of the most naive forms of brute-force string search (i.e. ones without early termination on the first mismatch when aligning a substring with the query string), because improvements work by skipping some substrings. However, should we wish to search for exact matches, this is a solved problem with standard solutions, such as the linear-time Knuth-Morris-Pratt algorithm \cit{kmp}, the emprically performant Boyer-Moore algorithm \cit{boyer-moore} or algorithms such as hybrid KMP/BM algorithms. \cit{kmpbm} \cit{kmpbmtwo} String search algorithms such as these are also of more use in other areas of bioinformatics more generally as seen in the use of a hybrid KMP/Boyer-Moore in genome profiling in the recent PATSIM \cit{patsim} or an alternative exact string-searching algorithm TVSBS, \cit{tvsbs} designed specifically for biological sequence data. However, for most cases of exact string-matching GNU/Linux provides a standard, optimised implementation of Boyer-Moore as part of the \textit{grep} utility, and other operating systems provide similar tools.
 
 Alternatively, since we are only searching for high scores, it would be possible to implement an algorithm that searches only for \textit{good} matches and skips bad matches by some means - suggesting how one might do this is beyond the scope of this paper, however. 
 
@@ -504,7 +532,7 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 \textbf{<note to specify the the flexibility of scoring mechanisms via curried functions (to do)>}
 
-\textbf{choice operators}
+\textbf{note: choice operators}
 
 \textbf{<note to discuss ambiguities in original design, and how we implemented them>}
 
