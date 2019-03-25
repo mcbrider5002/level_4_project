@@ -427,7 +427,7 @@ Before we deal with the complexities of NRPSes, however, in order to provide a s
 
 \jaccard
 
-There are a few immediate restrictions on this method that should be mentioned, however. We note that this method does not account for repeated components; so if \textit{Glycine} appears twice in a tag, the score won't reflect this. Perhaps most importantly, it also does not account for ordering of the components sequence tags. Most sequence tags are quite small, so the effect of these biases should be minimal, especially in shorter data, where there will be fewer orderings, and less chance of repeated components. We attempt to overcome these limitations by the more complicated method of Pep2Path, but should one wish to extend this method, a simple solution to the problem of repeated components is the generalisation of the Jaccard Similarity Index for multisets.
+There are a few immediate restrictions on this method that should be mentioned, however. We note that this method does not account for repeated components; so if \textit{Glycine} appears twice in a tag, the score won't reflect this. Perhaps most importantly, it also does not account for ordering of the components' sequence tags. Most sequence tags are quite small, so the effect of these biases should be minimal, especially in shorter data, where there will be fewer orderings, and less chance of repeated components. We attempt to overcome these limitations by the more complicated method of Pep2Path, but should one wish to extend this method, a simple solution to the problem of repeated components is the generalisation of the Jaccard Similarity Index for multisets.
 
 In order to account for ordering, however, we return to the problem we outlined at the start of this section: scoring alignments of sequence tags and all rearrangements of gene clusters against one another. Reorderings of the assembly-blocks are, of course, permutations, and we deal with this concept directly. Where the direction of tuples is concerned, for each ordering, the directions \(n\) assembly-blocks can be arranged in are the cartesian product of \(n\) tuples, one for each block, where the contents are the block itself and the block reversed. For alignments, we just iterate through starting positions \(i\) and then compare positions \(i\) to \(i + m\) of the longer item being compared, where \(m\) is the length of the shorter.
 
@@ -435,15 +435,39 @@ Finally, once we have an alignment, we can score the pair of tag and BGC. Our ob
 
 Again, we can make some optimisations. Firstly, we can reduce the burden of the cartesian product in practise by checking beforehand if an NRPS module is equal to its reverse; and if so, replace the 2-tuple of a module and its reverse with a 1-tuple of the forwards-direction of the module alone. Additionally, we only need to check one ordering of the sequence tag, as we alluded to earlier. First consider that we have an arbitrary ordering of assembly-blocks, and that we have some alignment beginning at \(i\) for \(0 \leq i \leq (n-s-1)\). Now, considering the case where the sequence tag is reversed, let us also reverse all the blocks in the BGC prediction, and the order in which they appear. Then there will exist an alignment \textit{ending} at position \(n-i\) such that for \(n-i-m \leq j \leq n-i\) we have \(T[i] = T'[j]\) and \(C[i] = C'[j]\), that is, elementwise the tag and cluster will align in the same way. As long as our scoring function gives symmetric results, then we have that we can check the score of the sequence tag in reverse by also reversing the assembly-blocks, and therefore we do not need to reverse the sequence tag at all for symmetric scoring functions where we check every ordering of the assembly-blocks.
 
-Directly following from the fact that we compute a score for each assembly-block permutation, our algorithm is \(O(p!)\) for the number of modules \(p\). We also have that the size of our cartesian products (one cartesian product for each permutation) is up to \(2^p\) each. Then there is the additional cost of alignment: an additional \(n-m+1\) scores must be computed for each assembly-line configuration. This is a total time of \(2^{p}\cdot{p!}\cdot(n-m+1)\) - this is still \(O(p!)\), but the additions are not insignificant, and in the worst-case we will have \(n\) modules, degenerating into \(2^{n}\cdot{n!}\cdot(n-m+1)\) or \(O(n!)\) time. Our optimisation to not check symmetric assembly-blocks twice doesn't affect affect our potential \(O(n!)\) running time at all, and blocks may be arbitrarily asymmetric. However, when assembly-blocks are length \(1\) this is a special case: trivially all of them are symmetric, and therefore the cartesian product is entirely eliminated. This is especially significant because when assembly-blocks are length \(1\), the number of modules is \textit{maximised} i.e. this improves significantly what is on cursory examination the worst-case, even if it doesn't make the computation tractable.
+Directly following from the fact that we compute a score for each assembly-block permutation, our algorithm is \(O(p!)\) for the number of modules \(p\). We also have that the size of our cartesian products (one cartesian product for each permutation) is up to \(2^p\) each. Then there is the additional cost of alignment: an additional \(n-m+1\) scores must be computed for each assembly-line configuration. This is a total time of \(2^{p}\cdot{p!}\cdot(n-m+1)\) - this is still \(O(p!)\), but the additions are not insignificant, and in the worst-case we will have \(n\) modules, degenerating into \(2^{n}\cdot{n!}\cdot(n-m+1)\) or \(O(n!)\) time. Our optimisation to not check symmetric assembly-blocks twice doesn't affect affect our potential \(O(n!)\) running time at all, and blocks may be arbitrarily asymmetric. However, when assembly-blocks are length \(1\) this is a special case: trivially all of them are symmetric, and therefore the cartesian product is entirely eliminated. This is especially significant because when assembly-blocks are length \(1\), the number of modules is \textit{maximised} i.e. this improves significantly what is on cursory examination the worst-case, even if it doesn't make the computation tractable. (Of course, this is only a worst-case for this general solution; it would be trivial to find an elementwise solution where we don't care about ordering effects and all assembly-blocks are length \(1\) in \(O(nlogn)\) time: just sort elements and compare.)
 
-\textbf{<note: this 'worst-case' probably is actually solvable without permutations>}
+\begin{algorithm}
+    \DontPrintSemicolon
+    \KwData{$T$ A sequence tag\;
+		 $G$ A list of gene predictions, partitioned into sublists where each represents an assembly block\;
+		 $score$ A scoring function}
+    \KwResult{$S$ A score for closeness of match between $T$ and $G$}
+    \Begin{
+	$S \leftarrow -\infty$ \;
+	$m \leftarrow min(T.size, G.size)$\;
+	$n \leftarrow max(T.size, G.size)$\;
+	$Tlarger \leftarrow (T.size \leq G.size)$\;
+	\For{$p \in G$}{
+		\For{$O \in product(p)$}{
+			\For{$0 \leq i \leq n - m$}{
+				\If{$Tlarger$}{
+					$score(T[i..i+m], O)$\;
+				}\Else{
+					$score(T, O[i..i+m])$\;
+				}
+				$S \leftarrow max(S, s)$\;
+			}
+		}
+	}
+    }
 
-\textbf{<note to include NRP2Path pseudocode>}
+\caption{NRP2Path}\label{alg:nrp2path}
+\end{algorithm}
 
 Note that there are alternative metrics we could have used for the process; for example, for Jaccard similarity a suitable alternative might have been the \textit{Dice Coefficient}, \cit{Dice} which is very similar but might justify itself by better empirical performance. Additionally rather than attempting an alignment scoring we might use \textit{Levenshtein Distance}, \cit{levenshtein} (perhaps normalised by tag length) which measures edit distance between two strings for the operations insertion, deletion and substitution. Suppose a tag and a set of BGC predictions are identical, other than one component inserted directly in the middle. Then an alignment comparison will only be able to match half as many components (it will be displaced by one for all others) but the Levenshtein distance will only score one mismatch. If our data were to often miss or insert entire components, then the Levenshtein distance would be a much better predictor.
 
-However, the theoretical complexity of the alignment comparisons are quite an issue: even for small data there are so many multiplicative factors involved that there will be an intense computational strain. The most obvious way to improve on this is to discard the order entirely and use another metric as with our Jaccard similarity score; but of course we lose information this way. A sensible alternative approach might be to, instead of scoring every match, to try and align order the assembly-blocks so they best match the sequence tag and maximise the score this way. We also suspect there might be a technique for comparing substrings in order to compute the total score, and that certain possibilities can be discarded as infeasible \textit{a priori} via biochemistry-specific knowledge. None of these ideas other than the alternative metric make it into our current version, unfortunately.
+However, the theoretical complexity of the alignment comparisons are quite an issue: even for small data there are so many multiplicative factors involved that there will be an intense computational strain. The most obvious way to improve on this is to discard the order entirely and use another metric as with our Jaccard similarity score; but of course we lose information this way. A sensible alternative approach might be to, instead of scoring every match, to try and align order the assembly-blocks so they best match the sequence tag and maximise the score this way. The idea of sorting length \(1\) assembly-blocks for elementwise comparison might generalise (we might, for example, be able to partition our sequence tag into n-grams as well. We also suspect there might be a technique for comparing substrings in order to compute the total score, and that certain possibilities can be discarded as infeasible \textit{a priori} via biochemistry-specific knowledge. None of these ideas other than the alternative metric make it into our current version, unfortunately.
 
 \subsection{RiPP2Path}
 
@@ -499,6 +523,8 @@ It is also worth noting that the runtime required was very unevenly distributed;
 This gives us very optimistic projections for simpler datasets. However, it is worth noting that we used a mass table of only the proteinogenic amino acids for these results; these have quite varied masses (other than Leucine/Isoleucine, which we combined into a single entry in the mass table); in fact with the mass tolerances we used it is impossible for an edge to have more than one label (given that Leucine and Isoleucine are one label) so the running time must be coming almost entirely either from edge discovery or from constructing paths themselves and not alternative labellings - as we explained in \ref{msalgorithm} this is the \textit{easy} part of the problem. Under conditions where mass tables contain similar values, this algorithm is likely to be wholly inappropriate and another approach - for example the Antisymmetric Path Problem approach \cit{msbook} - should be used instead.
 
 \textbf{note: ripp2path, jaccard nrp2path and other nrp2paths}
+
+\textbf{note: algorithms important}
 
 \textbf{<note: would it be faster operating on strings?>}
 
