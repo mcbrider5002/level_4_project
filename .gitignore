@@ -9,4 +9,5 @@
 *.7z
 *.tar
 *.mgf
+*.log
 project/*.png
