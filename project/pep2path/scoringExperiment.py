@@ -63,13 +63,17 @@ def plot_results(scores, title, loc, cmap='plasma'):
 def score_unique_components(s, g):
 	s = compare.normalise_tag(s)
 	g = compare.normalise_tag(list(itertools.chain.from_iterable(g)))
-	return compare.score_unique_components(s, g)[0]
+	return compare.score_unique_components(s, g)
 		
-def simple_alignment(s, g):
+def score_simple_alignment(s, g):
 	s = compare.normalise_tag(s)
 	g = compare.normalise_gbk(g)
-	score = compare.score_alignment(s, g, compare.simple_score)	
-	return score
+	return compare.score_alignment(s, g, compare.simple_score())	
+	
+def score_p2p_alignment(s, g):
+	s = compare.normalise_tag(s)
+	g = compare.normalise_gbk(g) 
+	return compare.score_alignment(s, g, compare.p2p_score())
 	
 def run_scoring_experiment():
 	

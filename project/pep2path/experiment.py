@@ -50,16 +50,16 @@ def match_randomised(spectra_names, spectra_tags, gbk_components, headers, count
 	prints this information out.'''
 def print_simple(headers, counts, out):	
 	print("---%s---\n" % out)
-	for header, ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in zip(headers, counts):
-		print("%s\n Total Correct: %d\n" % (header, total_correct) +
+	for header, ((best_spectrum, best_gbk, best_score), score_sum, avg) in zip(headers, counts):
+		print("%s\n Score Sum: %d\n" % (header, total_correct) +
 				"Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score) +
-				"Comparisons: %d Spectra_Components: %d Gbk_Components: %d Gbk_Files: %d\n" % (comparisons, spectra_total, total_gbk_comps, total_gbk_files))
+				"Average Score: %d\n" % (avg))
 
 '''Given a list of tables in the format [[(best_spectrum, best_gbk, best_score)]], prints this information out.'''				
 def print_alignment(headers, counts, out):
 	print("---%s---\n" % out)
-	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
-		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
+	for header, ((best_spectrum, best_gbk, best_score), avg) in zip(headers, counts):
+		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d Average: %d\n" % (best_spectrum, best_gbk, best_score, avg))
 		
 def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=18):
 
@@ -95,15 +95,15 @@ def print_intersection_tables(shuffled_iters, random_iters, table_data, label_wi
 
 	for headerList, countList, out in table_data:
 	
-		countList = [(best_score, total_correct, comparisons)
-						for ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in countList]
+		countList = [(best_score, total_correct, avg)
+						for ((best_spectrum, best_gbk, best_score), score_sum, avg) in countList]
 		
 		actualComps = [countList[0]]
 		shuffledComps = countList[1:1+shuffled_iters]
 		randomComps = countList[1+shuffled_iters:]
 		
 		print_table(out, ("Normal", "Shuffled", "Random"), 
-						 ("Best Match", "Total Correct", "Comparisons"),
+						 ("Best Match", "Score Sum", "Average"),
 						 [actualComps, shuffledComps, randomComps], 
 						 label_width=label_width, 
 						 column_width=column_width)
@@ -112,19 +112,19 @@ def print_alignment_tables(shuffled_iters, random_iters, table_data, label_width
 	
 	for headerList, countList, out in table_data:
 	
-		countList = [(best_score,) for (best_spectrum, best_gbk, best_score) in countList]
+		countList = [(best_score, avg) for ((best_spectrum, best_gbk, best_score), avg) in countList]
 		
 		actualComps = [countList[0]]
 		shuffledComps = countList[1:1+shuffled_iters]
 		randomComps = countList[1+shuffled_iters:]
 		
 		print_table(out, ("Normal", "Shuffled", "Random"), 
-						 ("Best Score",),
+						 ("Best Score", "Average"),
 						 [actualComps, shuffledComps, randomComps], 
 						 label_width=label_width, 
 						 column_width=column_width)
 
-def experiment(shuffled_iters, random_iters, comparator, printer, table_printer):
+def experiment(shuffled_iters, random_iters, comparator, printer, table_printer, preprocess_s):
 
 	gbk_files, gbk_names = get_gbks()
 
@@ -152,6 +152,7 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 		spectra_names = [str(spectrum.id) for spectrum in msagg.spectra]
 		msagg.filter_intensity_local(intensity_thresholds=[intensity_threshold*mint for mint in msagg.max_intensity_local()])
 		spectra = msagg.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+		spectra = preprocess_s(spectra)
 		
 		counts = []
 		counts.append(comparator(spectra_names, spectra, gbk_names, gbk_files))
@@ -166,27 +167,28 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 	table_printer(shuffled_iters, random_iters, table_data)
 
 def intersection_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_intersection_tables)
+	def preprocess_s(spectra): return [tags.unique_components() for tags in spectra if tags.unique_components()]
+	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_intersection_tables, preprocess_s)
 
 def simple_experiment(shuffled_iters=5, random_iters=5):
+	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
 	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
-		compare.compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.SIMPLE_SCORE)
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables)
+		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scores=compare.simple_score())
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
 	
 def p2p_experiment(shuffled_iters=5, random_iters=5):
+	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
 	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
-		compare.compare_alignment(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.P2P_SCORE)
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables)
+		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.p2pscore())
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
 	
 def main():
 	s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
 	g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]
-	spectrum_name, genbank_name, score = compare.compare_alignment([str(s)], s, [str(g)], g)
+	spectrum_name, genbank_name, score = compare.score_alignments([str(s)], s, [str(g)], g)
 	print("Spectrum: " + spectrum_name)
 	print("Genbank: " + genbank_name)
 	print("Score: " + str(score))
-
-	#alignment_experiment()
 	
 if __name__ == "__main__":
 

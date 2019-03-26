@@ -38,7 +38,7 @@ def convert_to_single_char(spectra_tags):
 	return [(id, "".join([one_letter_AA.get(comp.upper, 'X') for comp in tag])) for id, tag in s_tags]
 	
 '''Scoring mechanism for Ripp2Path algorithm (performs the actual work of the algorithm once all the data is formatted correctly).'''
-def ripp2path_scorer(seq_len, single_char_tags, frames):
+def ripp2path_scorer(seq_len, single_char_tags, frames, no_results=100):
 
 	#regular strands will be labelled 0 to 2 and reverse complement strands will be labelled from (seq_len) to (seq_len - 2)
 	nucpos_func = lambda f_no, i: abs((-seq_len) * math.floor(f_no / 3) + (f_no % 3 + i))
@@ -48,15 +48,15 @@ def ripp2path_scorer(seq_len, single_char_tags, frames):
 					for (frame_no, frame, strand), (spectra_name, tag) in itertools.product(zip(range(6), frames, strands), single_char_tags) 
 							for i in range(len(frame) - len(tag))]
 	
-	return sorted(scores, key=lambda t: t[5], reverse=True)[:noResults]
+	return sorted(scores, key=lambda t: t[5], reverse=True)[:no_results]
 	
 '''Given a list of SpectrumTags objects, compares them against a given Genbank file's sequence data using the RiPP2Path algorithm.'''	
-def ripp2path(spectra_tags, path, file, noResults=100):
+def ripp2path(spectra_tags, path, file, no_results=100):
 	gbk = get_sequence_file(path, file)
 	seq_len = len(gbk.seq)
 	frames = six_frame_translation(gbk)
 	single_char_tags = convert_to_single_char(spectra_tags)
-	return ripp2path_scorer(seq_len, single_char_tags, frames)
+	return ripp2path_scorer(seq_len, single_char_tags, frames, no_results)
 
 def ripp_printer(headers, scores, label_width=4, column_width=14, outpath=os.path.dirname(__file__), outfile="ripps.out"):
 	no_entries = len(headers)

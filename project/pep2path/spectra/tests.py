@@ -373,7 +373,6 @@ def test_find_longest_tag(mass_table=AA_mass_table):
 
 '''Run tests. They should be randomised, but they will give an indication of whether something is obviously wrong.'''
 def tests():
-	test_mappings()
 	test_decompose_tag()
 	test_component_counts()
 	test_unique_components()
@@ -381,6 +380,7 @@ def tests():
 	test_expand_tag_notation()
 	test_flatten_tags()
 	
+	test_mappings()
 	test_sequence_by_id_helpers()
 	test_max_mass()
 	test_max_intensity()
