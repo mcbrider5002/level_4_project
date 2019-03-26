@@ -294,3 +294,10 @@ textfont=it,tableposition=above]{caption}
       \parsep=1pt plus 1pt
       \itemsep=\parsep}
 
+% let us define a definition for unnumbered chapters.
+\titleformat{name=\chapter,numberless}
+            [display]
+            {\normalfont\huge\bfseries\secfont}
+            {}
+            {0pt}
+            {}

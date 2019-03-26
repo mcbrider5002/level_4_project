@@ -170,7 +170,7 @@ One of the motivations for RiPPQuest is that lanthipeptides have relatively shor
 
 Pep2Path \cit{p2p} provides two algorithms, NRP2Path and RiPP2Path. Both rely on the same principles of mass spectrometry. In the original Pep2Path source program, mass search tags can either be given directly or can be derived from a mass-shift sequence. They then extract relevant BGC information from a sequence, and compare potential sequence tags to potential BGCs using a different scoring function for each algorithm in order to enable finding the best match.
 
-\subsection{NRP2Path}
+\subsection{NRP2Path} \label{nrpbackground}
 
 NRP2Path first takes potential sequence tags and antiSMASH substrate specificity predictions. These sequence tags can be arranged either forwards or backwards, and within the prediction there are several different NRPS modules, which themselves can either be arranged forwards or backwards and can be arranged in any order to make up the full BGC sequence. So in order to test all possible gene sequences, Pep2Path must generate all permutations of the cartesian products of the forwards and backwards modules (a total of \(n!\cdot2^n\) different orderings for \(n\) modules). A sequence tag and an ordering of a gene sequence are then aligned with one another and scored for their match, testing every possible alignment in order to find the best score.
 
@@ -224,7 +224,7 @@ Furthermore, for Pep2Path to function, it requires both the previously-mentioned
 
 Mass spectrometry, however, is more complicated. We have data from mass spectra, but not sequence tags. This obviously creates a requirement to derplicate these spectra. However while this problem has been thoroughly studied (and continues to be thoroughly studied) and has an incredible breadth of software solutions available, the breadth of such solutions presents a challenge in itself, and hitherto much of the field has focused on protein-identification, \cit{msomics} as seen in software such as Mascot. \cit{mascot} Rather than trying to find a tool that best fits our needs, we instead propose that the software should have a simple \textit{de novo} mass spectrometry algorithm, focusing on no specific mass table, and usable for any peptide sequence. This violates the software engineering principle of software reuse, but eliminates the need for biochemistry research as a prerequisite, and potentially issues with of software licensing, allowing us to package Pep2Path as a standalone piece of software, with only the open-source antiSMASH as a dependency. Additionally, we can mitigate the effect of `reimplementing the wheel badly' by having a modular structure such that the mass spectrometry component can be replaced by any implementation an interested party thinks would suit their use-case and the only real drawback in this case is processing speed.
 
-The software has to handle some very large search spaces, so efficiency \textit{is} a concern. However, the client had a preliminary stage of screening for data reducing the data our implementation would have to process. Additionally, it would also be run on powerful hardware dedicated to processing very large bioinformatics data, so whilst it was necessary for our implementation to be efficient enough to terminate in reasonable time (and not, say, have unnecessary orders of complexity included within algorithms), the absolute highest degree of efficiency was not an aim for this project. Particularly, we are interested in a reasonable running-time for \textit{Pep2Path}. This means not concerning ourselves overly with the efficiency of the mass spectrometry derplication - for which efficient algorithms are a different area of study.
+The software has to handle some very large search spaces, so efficiency \textit{is} a concern. However, the client had a preliminary stage of screening for data reducing the data our implementation would have to process. Additionally, it would also be run on powerful hardware dedicated to processing very large bioinformatics data, so whilst it was necessary for our implementation to be efficient enough to terminate in reasonable time (and not, say, have unnecessary orders of complexity included within algorithms), the absolute highest degree of efficiency was not an aim for this project. Particularly, we are interested in a reasonable running-time for \textit{Pep2Path}. This means not concerning ourselves overly with the efficiency of the mass spectral sequencing - for which efficient algorithms are a separate subfield of study.
 
 It is also important to note that RiPP2Path, while it is a desirable inclusion, is a rather simple accessory tool and is lower-priority than a full implementation of NRP2Path - the highest priority is to deliver an end-to-end \textit{flexible} implementation of NRP2Path to the client, and preferably, implement it in the client codebase, but the simplicity of RiPP2Path also makes it an easy inclusion. Some other useful features to include are (in descending order of significance); the ability to compare a group of spectra to a group of genomes and return some group-matching statistics; an accessory tool to plot the mass spectrum and visualise an identified sequence tag along it; and a CLI in order to run the program as a standalone application.
 
@@ -366,7 +366,7 @@ To perform edge discovery, we begin by allowing a value to be specified for a ma
 	}
     }
 
-\caption{Edge Discovery Algorithm}\label{alg:edgedisc}
+\caption{Edge Discovery Algorithm}\label{alg:edgedesc}
 \end{algorithm}
 
 To perform path discovery, we perform an exhaustive depth-first search for every peak in the vertex set. (A breadth-first search would also be possible but depth-first is conceptually simpler to understand.) First, we choose a vertex, and denote it as our current vertex. So long as our current vertex has edges we haven't yet explored, we choose one of those edges, marking it as explored, and make the other vertex involved in the edge our current vertex and push our previous vertex onto a stack. We continue this process until we reach a vertex with no unexplored edges. At this point we pop the vertex at the top of our stack, marking it the new head as our current vertex and resume searching for edges. Once we have also exhausted our stack, we choose another vertex we have not already performed this process for, and repeat until we have exhausted all vertices, to get all possible sequence tags.
@@ -406,12 +406,12 @@ This is done for two reasons: under normal circumstances, we assume if we have f
 	}
     }
 
-\caption{Path Discovery Algorithm}\label{alg:pathdisc}
+\caption{Path Discovery Algorithm}\label{alg:pathdesc}
 \end{algorithm}
 
 Where theoretical performance is concerned, we expect edge discovery to be \(O(n^2)\): calculation of mass differences is \(i-1\) operations for some mass peak \(0 < i < n\) and this process will be performed \(n-1\) times; arithmetic sum gives us \(O(n^2)\) complexity. (The number of masses in the table is another multiplicative factor, but is effectively constant.) For path discovery, we shall not formally prove its complexity bound here (this is not the focus of this work), but we shall give a rough illustration: suppose there are edges between every peak and its subsequent peaks. (This is an unrealistic assumption in practise - this would suggest there is more noise than actual data!) Then it is possible to construct exactly one path of length \(m\) by choosing any \(m\) peaks from the whole set of \(n\) peaks. Therefore the number of paths must be \(\sum_{m=1}^n\binom{n}{m} = 2^{n} - 1\) - exponential in number of solutions. \footnote{This is a special case of the binomial theorem, \(\sum_{m=0}^{n}\binom{n}{m}x^{m}y^{n-m} = (x+y)^n\). Set both \(x\) and \(y\) to \(1\) and we have \(\sum_{m=0}^{n}{\binom{n}{m}} = 2^n\). Then subtract \(\binom{n}{0} = 1\) for \(\sum_{m=1}^{n}\) therefore \(2^n - 1\).} 
 
-However, for our restricted version where we do not consider subpaths, then consider that each \(m^{th}\) vertex may have a path to any of its subsequent \(m-1\) vertices. Normally, each connection like this would double the number of paths: for each path beginning at a vertex \(m\) with an incoming edge from vertex \(m'\), there would be another path beginning at \(m'\) and passing through \(m\). However, under our restriction, this second set of paths begins at \(m'\) is the only set counted: since it has an equal number of paths, this means that when we traverse an edge from one node to another node that has paths already in our 'path-set', and update this 'path-set' accordingly -- the number of paths remains constant. The only time the number of paths in the path-set increases under this restriction is when a node connects directly to a terminal node -- otherwise there exists subpaths that we are extending and therefore replacing by this process. Then for each node its number of paths with no subpaths is the number of terminal nodes which follow it; since in the worst-case, non-terminal nodes and terminal nodes can be understood as a function of the total number of nodes \(n\), under this simplifying assumption this part of the algorithm should be \(O(n^2)\). (Alternatively, one can represent this problem as linear with the number of edges, but number of peaks is known \textit{a priori} whereas edges are not, so we choose to represent it by number of peaks\.)
+However, for our restricted version where we do not consider subpaths, then consider that each \(m^{th}\) vertex may have a path to any of its subsequent \(m-1\) vertices. Normally, whenever we add an edge like this, it would double the number of paths: for each path beginning at a vertex \(m\) with an incoming edge from vertex \(m'\), there would be another path beginning at \(m'\) and passing through \(m\). However, under our restriction, this second set of paths begins at \(m'\) is the only set counted: since it has an equal number of paths, this means that when we traverse an edge from one node to another node that has paths already in our 'path-set', and update this 'path-set' accordingly -- the number of paths remains constant. The only time the number of paths in the path-set increases under this restriction is when a node connects directly to a terminal node -- otherwise there exists subpaths that we are extending and therefore replacing by this process. Then for each node its number of paths with no subpaths is the number of terminal nodes which follow it; since in the worst-case, non-terminal nodes and terminal nodes can be understood as a function of the total number of nodes \(n\), under this simplifying assumption this part of the algorithm should be \(O(n^2)\). \footnote{This maps cleanly onto an inductive proof.} (Alternatively, one can represent this problem as linear with the number of edges, but number of peaks is known \textit{a priori} whereas edges are not, so we choose to represent it by number of peaks.)
 
 Therefore, under our simplifying assumption, we have \(O(n^2)\) complexity for the solution space of the path discovery problem (this maps directly onto our time-complexity since there is a one-to-one correspondence between the edges we traverse) as long as we only have one element in the mass table (not a very useful assumption). However, in noisy data, any path may still have up to \(alphabet\_size\) labels, and therefore up to \(alphabet\_size^n\) variations of the path for different labels. This is a very pessimistic estimation unless every mass in the table is very close together or the mass-tolerance is set unreasonably wide, but if masses are close then this can very quickly become problematic without necessarily coming close to this worst-case scenario. Leucine and Isoleucine have identical masses: so, purely for the sake of illustration, if we were to chain ten of these, there would be \(2^{10} = 1024\) possible tags for one exact set of data. For Leucine and Isoleucine we chose to represent them as a single tag in our table when we used them in order to avoid this issue but this is something worth noting for noisy data, and mass tables with similar masses contained within.
 
@@ -431,11 +431,11 @@ There are a few immediate restrictions on this method that should be mentioned, 
 
 In order to account for ordering, however, we return to the problem we outlined at the start of this section: scoring alignments of sequence tags and all rearrangements of gene clusters against one another. Reorderings of the assembly-blocks are, of course, permutations, and we deal with this concept directly. Where the direction of tuples is concerned, for each ordering, the directions \(n\) assembly-blocks can be arranged in are the cartesian product of \(n\) tuples, one for each block, where the contents are the block itself and the block reversed. For alignments, we just iterate through starting positions \(i\) and then compare positions \(i\) to \(i + m\) of the longer item being compared, where \(m\) is the length of the shorter.
 
-Finally, once we have an alignment, we can score the pair of tag and BGC. Our objective is for this process to be independent of the scoring function used, so we implement two scoring functions. First, a simple scoring function which counts the number of matches between a tag and gene predictions, and normalises them by the length of the tag. This is a normalised and inverted variant of the \textit{Hamming Distance}, \cit{hamming} the number of substitutions required to transform one string into another: \(\dfrac{1 - hamming}{length}\). We use this score largely for its simplicity, and we normalise it because it is easier to understand when unitary; we invert it so it travels in the same direction as our Jaccard scoring (i.e. higher scores are better). Secondly, we implement the original NRP2Path scoring function shown in Equation \ref{eq:scoreeqn}. We then take the maximum score across all orderings and alignments as the score between \(C\) and \(T\); this aggregates well and we are in general only interested in the best matches.
+Finally, once we have an alignment, we can score the pair of tag and BGC. Our objective is for this process to be independent of the scoring function used, so we implement two scoring functions. First, a simple scoring function which counts the number of matches between a tag and gene predictions, and normalises them by the length of the tag. This is a normalised and inverted variant of the \textit{Hamming Distance}, \cit{hamming} the number of substitutions required to transform one string into another: \(1 - \dfrac{hamming}{length}\). We use this score largely for its simplicity, and we normalise it because it is easier to understand when unitary; we invert it so it travels in the same direction as our Jaccard scoring (i.e. higher scores are better). It is both a stepping-stone towards implementing more complex scoring functions, and also is very general and capable of being used on any alphabets. Secondly, we implement the original NRP2Path scoring function shown in Equation \ref{eq:scoreeqn}. We then take the maximum score across all orderings and alignments as the score between \(C\) and \(T\) as in the original Pep2Path; this aggregates well and we are in general only interested in the best matches. This is much more complicated, and less general, but more sophisticated and hopefully more able to usefully distinguish matches.
 
 Again, we can make some optimisations. Firstly, we can reduce the burden of the cartesian product in practise by checking beforehand if an NRPS module is equal to its reverse; and if so, replace the 2-tuple of a module and its reverse with a 1-tuple of the forwards-direction of the module alone. Additionally, we only need to check one ordering of the sequence tag, as we alluded to earlier. First consider that we have an arbitrary ordering of assembly-blocks, and that we have some alignment beginning at \(i\) for \(0 \leq i \leq (n-s-1)\). Now, considering the case where the sequence tag is reversed, let us also reverse all the blocks in the BGC prediction, and the order in which they appear. Then there will exist an alignment \textit{ending} at position \(n-i\) such that for \(n-i-m \leq j \leq n-i\) we have \(T[i] = T'[j]\) and \(C[i] = C'[j]\), that is, elementwise the tag and cluster will align in the same way. As long as our scoring function gives symmetric results, then we have that we can check the score of the sequence tag in reverse by also reversing the assembly-blocks, and therefore we do not need to reverse the sequence tag at all for symmetric scoring functions where we check every ordering of the assembly-blocks.
 
-Directly following from the fact that we compute a score for each assembly-block permutation, our algorithm is \(O(p!)\) for the number of modules \(p\). We also have that the size of our cartesian products (one cartesian product for each permutation) is up to \(2^p\) each. Then there is the additional cost of alignment: an additional \(n-m+1\) scores must be computed for each assembly-line configuration. This is a total time of \(2^{p}\cdot{p!}\cdot(n-m+1)\) - this is still \(O(p!)\), but the additions are not insignificant, and in the worst-case we will have \(n\) modules, degenerating into \(2^{n}\cdot{n!}\cdot(n-m+1)\) or \(O(n!)\) time. Our optimisation to not check symmetric assembly-blocks twice doesn't affect affect our potential \(O(n!)\) running time at all, and blocks may be arbitrarily asymmetric. However, when assembly-blocks are length \(1\) this is a special case: trivially all of them are symmetric, and therefore the cartesian product is entirely eliminated. This is especially significant because when assembly-blocks are length \(1\), the number of modules is \textit{maximised} i.e. this improves significantly what is on cursory examination the worst-case, even if it doesn't make the computation tractable. (Of course, this is only a worst-case for this general solution; it would be trivial to find an elementwise solution where we don't care about ordering effects and all assembly-blocks are length \(1\) in \(O(nlogn)\) time: just sort elements and compare.)
+Directly following from the fact that we compute a score for each assembly-block permutation, our algorithm is \(O(p!)\) for the number of modules \(p\). We also have that the size of our cartesian products (one cartesian product for each permutation) is up to \(2^p\) each. Then there is the additional cost of alignment: an additional \(n-m+1\) scores must be computed for each assembly-line configuration. This is a total time of \(2^{p}\cdot{p!}\cdot(n-m+1)\) - this is still \(O(p!)\), but the additions are not insignificant, and in the worst-case we will have \(n\) modules, degenerating into \(2^{n}\cdot{n!}\cdot(n-m+1)\) or \(O(n!)\) time. Our optimisation to not check symmetric assembly-blocks twice doesn't affect affect our potential \(O(n!)\) running time at all, and blocks may be arbitrarily asymmetric. However, when assembly-blocks are length \(1\) this is a special case: trivially all of them are symmetric, and therefore the cartesian product is entirely eliminated. This is especially significant because when assembly-blocks are length \(1\), the number of modules is \textit{maximised} i.e. this improves significantly what is on cursory examination the worst-case, even if it doesn't make the computation tractable. (Of course, this is only a worst-case for this general solution; it would be trivial to find an elementwise solution where we don't care about ordering effects and all assembly-blocks are length \(1\) in \(O(nlogn)\) time: just sort \(m\) elements from both for every alignment into buckets and compare.)
 
 \begin{algorithm}
     \DontPrintSemicolon
@@ -516,7 +516,23 @@ Alternatively, since we are only searching for high scores, it would be possible
 
 We chose to use Python 3 for our implementation, as it is the \textit{lingua franca} of scientific computing. It offers highly expressive language constructs and useful libraries, such as itertools \cit{itools} offering many convenient ways to iterate through combinations, permutations and more, NumPy \cit{numpy} for high-speed numerical operations and BioPython \cit{biopy} for bioinformatics. All of these were used in the course of implementing our design. Additionally, a great volume of scientific software is already implemented in Python (indeed, the original Pep2Path is implemented using Python) and many scientists are familiar with Python already, making it easier to interface with the already extant body of work. Particularly, the client's codebase was implemented in Python, so this choice made for easier integration without the need for a language-spanning gateway. Other options like Julia \cit{julia} exist, but given their lack of maturity when compared to Python we elected not to explore these options. 
 
-Additionally, like most modern high-level languages, Python is also platform-independent, so properly-written software can consequently be run without concern for platform, reaching more potential end-users.
+Additionally, like most modern high-level languages, Python is also platform-independent, so properly-written software can consequently be run without concern for platform, reaching more potential end-users. It also is remarkably easy to set up, even among high-level languages; this made it ideal for trying to minimise the burden of setup on the end-user.
+
+\section{Implementation}
+
+In practise, we implemented the NRP2Path scoring function with a few simplifying assumptions. Firstly, rather than utilising the statistical construction of the original authors for the prior probability, we instead assigned probability over the alphabet. Secondly, we implement only one of the two I-functions, the SVM I-function; the Stachelhaus Code I-function is not implemented. The prior probability as the original Pep2Path implements it is intended to estimate the probability of amino acids `in the wild' by treating the NORINE database as a representative sample of known information. This comes with the assumption, as the original authors note, that the distribution of amino acids in NORINE is generalisable, and indeed this may not hold for certain subcultures of bacteria or other contexts. Therefore, rather than bundling another layer of external complexity (dealing with NORINE data) with our implementation, we elected not to deal with this and instead provide simple implementations of tables of probabilities (implemented as a Python dictionary, again in the same way as the original Pep2Path) that can be swapped out as the end-user wishes as befitting their use-case.
+
+For the I-functions, we were able to scrape the classes used to calculate the SVM I-function from the Pep2Path `database' file containing scores and from the implementation itself. \footnote{For an overview of how this is implemented, see Section \ref{nrpbackground}; for the full listing of classes, see Appendix \ref{svmclasses}.} For the Stachelhaus Code, however, we found that we couldn't easily reconstruct it, and would have to write our own implementation from scratch or directly integrate with NRPSPredictor2 or antiSMASH. Neither of these outcomes were desirable, so we instead parameterised I-functions as a list of functions (treating functions as first-class citizens i.e. data) and we leave this and any other novel I-functions open to future implementation. In both cases, we do not think these alterations will affect the overall behaviour of the score, just its accuracy in specific use-cases, so it suffices for our project aims.
+
+One notable caveat is where the alphabet is concerned; the SVM method of course has a fixed alphabet, needing to know in advance how its various classes are constructed. When unknown components are used, it degenerates into evaluating \(1.0\) on an exact match and \(0.0\) otherwise; similarly we implement a 'prior probability' for any element which cannot be found in the Pdict as equal to the uniform probability of the elements contained. (This is not strictly speaking a probability, because while the elements in the Pdict sum to one, making them valid probabilities, adding any other component to this with a nonzero probability invalidates this. Since the probability is just a Bayes Rule inspired mechanism for calculating the score, and we do not need to rely on it having probabilistic properties, this shouldn't affect anything.)  We implement this this way so that it can generalise even to data with rare amino acids it doesn't know, but note that its performance will drop and it will not be appropriate for entirely unfamiliar datasets.
+
+\textbf{<note to mention constant-time lookup tables for amino acid matches>}
+
+One of our aims was the flexibility of the scoring system; in order to achieve this we wanted to have the ability to compose the scoring function's behaviour into the behaviour of larger functions i.e. the alignment comparison used in NRP2Path. The ability to pass around functions as first-class citizens makes this easy, but then the caller has to specify the parameters chosen. While we could have chosen to utilise variable arguments, this would then require each called function to parse its arguments, and any reader to infer the structure of those arguments; instead we chose to fix the argument list for each scoring function so that they could be called with the same fixed set of arguments; specifically a sequence tag and a set of Genbank predictions.
+
+Having done this, however, each function would then have its own set of parameters that would need to be supplied to it in addition to the common operands. To solve this problem, we might use a factory method; a higher-order function which takes scoring-function-specific parameters, and emits a fixed scoring function adapted to the parameters given. This would allow us to compose the behaviour of the scoring function independently of the caller. However, there is one additional subtlety: because of our dictionary-based approach to computing I-values, we would then have to compose more behaviour onto this function (the matching dictionary) as it obtained information on the spectrum. Computing the lookup dictionary inside the function's scope would defeat the purpose of using it in the first place, and therefore we must compose behaviour onto the function from outside its scope. Therefore there must be some separate intermediary that the caller can access in order to be able to create the lookup dictionaries with the list of spectra it receives. However, this behaviour shouldn't be built-into the caller either; this would defeat our aim of composability. 
+
+If we attempted to continue using higher-order functions we would have to awkwardly chain such fixers, complicating the design unnecessarily into various trees of subfunctions under each scoring function. It is for this reason we implement scoring functions as \textit{objects} and allow actual scoring to be done via a method built-in to the class. The class template is as follows: parameter behaviour is specified as the attributes of the object on object initialisation; other parameters needed at the start of each comparison (in our case the lookup dictionary) are defined by a setup method to which the spectrum and gene predictions are passed, but which otherwise relies on the object's internal state, unknown to the caller; finally we call the scoring method with the spectrum and gene predictions itself in order to compute a score. In this way we design a single interface for the calling of scoring functions (for example for alignment comparison), and composable behaviour packaged together within objects, whilst still not recomputing superfluous values on every call of the scoring function.
 
 \textbf{<note to talk about itertools simplifying much of combinatorial maths involved - particularly much of the work of nrp2path can be reduced to two lines (three with optimisation)>}
 
@@ -524,19 +540,15 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 \textbf{<note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities>}
 
-\textbf{<note to mention constant-time lookup tables for amino acid matches>}
+\textbf{<note: matplotlib>}
 
 \textbf{<note on how unit tests were implemented>}
 
 \textbf{<note on sequence tag notation, particularly the [A, B, C] case and how this affects default implementations of sequence tag comparison>}
 
-\textbf{<note to specify the the flexibility of scoring mechanisms via curried functions (to do)>}
-
 \textbf{note: choice operators}
 
 \textbf{<note to discuss ambiguities in original design, and how we implemented them>}
-
-\textbf{<note on simplifying assumptions in Pep2Path (I(AM), P(A)) , and particularly how alphabets affect things>}
 
 \textbf{<note to refer back to requirements for other things we implemented>}
 
@@ -558,12 +570,26 @@ This gives us very optimistic projections for simpler datasets. However, it is w
 
 \textbf{<note: there are sklearn implementations of jaccard similarity, hamming distance, etc; these are implemented in C and so might be faster>}
 
-Another possibility for improving the performance of NRP2Path would be to parallelise it, which is remarkably amenable to. For example, it would be easily possible to give each worker thread either a single pair of spectra and BGC to score, or a single ordering to score with the spectrum. This only offers performance linear with the number of parallel executions of the algorithm, and is dependent on the hardware available where the larger problem is largely algorithmic, but due to the ease of parallelisation this is a good next step.
+Another possibility for improving the performance of NRP2Path would be to parallelise it, which is remarkably amenable to. For example, it would be easily possible to give each worker thread either a single pair of spectra and BGC to score, or a single ordering to score with the spectrum. This only offers performance linear with the number of non-virtual threads available, and is dependent on the hardware available where the larger problem is largely algorithmic, but due to the ease of parallelisation this is a good next step.
 
 %==================================================================================================================================
 \chapter{Evaluation} 
 
-\section{Unit Tests}
+In order to ensure the correctness of our software, we describe in this chapter four methods of verification. Firstly, there is automated testing; this helps prove the correctness of our \textit{implementation} by testing certain invariants about the implementation. If the invariants are well-formulated, we will be able to demonstrate that the software implements what we intended to implement - but this does not necessarily prove that what we intended to implement was the \textit{correct} thing to implement. Nonetheless they are a useful internal diagnostic tool and eliminate most potential sources for error.
+
+Secondly, our scoring functions are a central point of interest, so we perform an experiment and give the results here for the properties we wish to test about them. We do this for two reasons; while we know the properties of Jaccard Similarity and Hamming Distance \textit{a priori}, the NRP2Path scoring function is less amenable to analysis, so we demonstrate its empirical properties with the default settings instead. The other reason is that there is a particular emphasis on scoring functions; we would nonetheless have to use the same procedure when performing automated testing, but by describing this procedure and the results thereof we hope to illustrate clearly the behaviour of the scoring functions.
+
+Thirdly, we detail the testing procedure for replicating the original Pep2Path experiments; such experiments will demonstrate:
+\begin{enumerate}
+	\item The empirical correctness of our implementation of Pep2Path (contingent on the correctness of the original implementation of Pep2Path).
+	\item Performance on real-world datasets.
+	\item The capacity for our platform to integrate outside scoring functions, such as the original NRP2Path scoring function (albeit with some 
+		simplifications).
+\end{enumerate}
+
+Lastly, we examine how well our software met the original requirements we set out.
+
+\section{Automated Testing}
 
 \textbf{<note to include unit tests - this proves not necessarily ultimate correctness, but that they adhere to certain invariants we expect from our conceptual understanding - particularly notable is the generation of synthetic data and the extraction of the correct pregenerated results from random noise, for all our algorithms>}
 
@@ -599,7 +625,7 @@ Alternatively, another experimental design would be to choose which component to
 
 \textbf{note: results go here}
 
-Note also that checks on these properties can be implemented as unit tests for the scoring functions; we implement a check on property 1 by performing the iterative mutation process, taking the scores sorted in non-decreasing order by number of mutations, and then use a sorting algorithm to sort in non-increasing order of score; the first value should be the score for no mutations in this case. It would also be possible to enforce properties 2 (by iteratively generating certain mismatches in the tag and checking if the score decreases) and 3 (by performing the same process but instead comparing the drops in score between tag lengths as mismatches are added) but we do not currently implement these at this time.
+Note also that checks on these properties can be implemented by means of automated testing for the scoring functions; we implement a check on property 1 by performing the iterative mutation process, taking the scores sorted in non-decreasing order by number of mutations, and then use a sorting algorithm to sort in non-increasing order of score; the first value should be the score for no mutations in this case. It would also be possible to enforce properties 2 (by iteratively generating certain mismatches in the tag and checking if the score decreases) and 3 (by performing the same process but instead comparing the drops in score between tag lengths as mismatches are added) but we do not currently implement these at this time for the reasons we outlined at the start of this chapter.
 
 \section{Original Pep2Path Experiments}
 
@@ -622,6 +648,41 @@ Note also that checks on these properties can be implemented as unit tests for t
 
 \chapter{Appendices}
 
+\section{Classes Used in SVM I-Function} \label{svmclasses}
+
+\begin{lstlisting}[language=python, float, caption={Classes used for SVM-I Function. Any exact match evaluates to 1.0. A small-class match evaluates to 0.75, a large-class match evaluates to 0.5, a three-class match evaluates to 0.25, and it evaluates to 0 otherwise.}, label=lst:svmclasses]
+svm_alphabet = ['ala', 'gly', 'val', 'leu', 'ile', 'abu', 'iva', 'ser', 'thr', 'hpg', 'dhpg', 'cys', 'pro', 'pip', 'arg', 'asp', 'glu', 'his', 'asn', 'lys', 'gln', 'orn', 'aad', 'phe', 'tyr', 'trp', 'dhb', 'phg', 'bht']
+		
+three_classes = {'hydrophobic-aliphatic':['ala', 'gly', 'val', 'leu', 'ile', 'abu', 'iva', 'ser', 'thr', 'hpg', 'dhpg', 'cys', 'pro', 'pip'],
+                 	 'hydrophilic':['arg', 'asp', 'glu', 'his', 'asn', 'lys', 'gln', 'orn', 'aad'],
+                 	 'hydrophobic-aromatic':['phe', 'tyr', 'trp', 'dhb', 'phg', 'bht']}
+
+big_classes = ['gly,ala,val,leu,ile,abu,iva',
+			   'ser,thr,dhpg,hpg', 
+			   'asp,asn,glu,gln,aad', 
+			   'dhb,sal', 
+			   'cys', 
+			   'phe,trp,phg,tyr,bht', 
+			   'orn,lys,arg', 
+			   'pro,pip']
+
+small_classes = ['val,leu,ile,abu,iva', 
+				 'ser', 
+				 'gly,ala', 
+				 'dhb,sal', 
+				 'cys', 
+				 'thr', 
+				 'asp,asn', 
+				 'phe,trp', 
+				 'glu,gln', 
+				 'pro', 
+				 'tyr,bht', 
+				 'orn,horn', 
+				 'dhpg,hpg', 
+				 'arg', 
+				 'aad']
+\end{lstlisting}
+
 \end{appendices}
 
 %==================================================================================================================================
@@ -633,5 +694,9 @@ Note also that checks on these properties can be implemented as unit tests for t
 \bibliographystyle{abbrvnat}
 
 \bibliography{l4proj}
+
+\listoffigures
+
+%\listoftables
 
 \end{document}
