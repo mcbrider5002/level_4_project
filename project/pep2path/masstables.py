@@ -1,9 +1,11 @@
 import csv
+import os
 
 #amino acids taken from supplementary table provided by kersten et al.
 #https://www.nature.com/articles/nchembio.684
 kersten_masses, kersten_names = {}, {}
-with open("nchembio.684-S3.csv", 'r') as file:
+path = os.path.join(os.path.dirname(__file__), "nchembio.684-S3.csv")
+with open(path, 'r') as file:
 	lines = [line for line in csv.reader(file)][2:] #split lines, cutting out headers
 	kersten_masses = {line[2]:line[0] for line in lines}
 	kersten_names = {line[2]:line[2] for line in lines}

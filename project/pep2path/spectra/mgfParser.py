@@ -142,10 +142,6 @@ def load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraDat
 ###Main###
 ##########
 
+#needs to be run from another file due to python package weirdness
 def main():
 	print(load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.mgf")[0][1])
-
-if __name__ == "__main__":
-
-    main()
-			

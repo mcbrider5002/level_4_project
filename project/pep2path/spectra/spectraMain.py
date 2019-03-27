@@ -9,37 +9,8 @@ from .Tag import Tag
 from .SpectrumTags import SpectrumTags
 from .tests import tests as tests
 
-##########
-###Data###
-##########
-
-#uses avg mass instead of monoisotopic
-AA_mass_table = {	
-					"Ala" : 71.0779,
-					"Arg" : 156.1857,
-					"Asn" : 114.1026,
-					"Asp" : 115.0874,
-					"Cys" : 103.1429,
-					"Gln" : 128.1292,
-					"Gly" : 57.0513,
-					"His" : 137.1393,
-					"Ile/Leu" : 113.1576,
-					"Lys" : 128.1723,
-					"Met" : 131.1961,
-					"Phe" : 147.1739,
-					"Pro" : 97.1152,
-					"Ser" : 87.0773,
-					"Thr" : 101.1039,
-					"Sec" : 150.0379,
-					"Trp" : 186.2099,
-					"Tyr" : 163.1733,
-					"Val" : 99.1311
-				}
+from .masstables import AA_mass_table
 				
-###########################
-###Convenience Functions###
-###########################
-
 def setup_mass_spectra(file, mass_table=AA_mass_table):
 	
 	filename, dict = file
@@ -169,18 +140,10 @@ def mibig_parser(inpath=os.path.join(os.path.dirname(__file__), "spectraData")):
 						file.write(str(tag) + "\n")
 		
 		file.close()
-
-##########
-###Main###
-##########
-		
+	
 def main():
 
 	path = os.path.join(os.path.dirname(__file__), "spectraData")
-	
-	tests()
-	
-	mibig_parser()
 	
 	#SecArgGlnPheArgIle
 	#...223959.ms

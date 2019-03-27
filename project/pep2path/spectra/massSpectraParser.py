@@ -119,88 +119,13 @@ def load_files_from_dir(path=os.path.dirname(__file__), pattern="*.ms"):
 		
 	return records
 	
-#######################################################
-###Main (for when the file is run as its own script)###
-#######################################################
+##########
+###Main###
+##########
 
-#filled with nasty debugging information right now	
-#should be either emptied or replaced with a call to load_files_from_dir using CL arguments later
-def main():
+def main(parentpath=os.path.dirname(__file__)):
+	print(load_files_from_dir(path=os.path.join(parentpath, "spectraData"), pattern="*.ms"))
 
-	import time
-	times = []
-	
-	path = os.path.join(os.path.dirname(__file__), "spectraData")
-	
-	#time small file
-	start = time.clock()
-	print(load_files_from_dir(path=path, pattern="CCMSLIB00000579925.ms"))
-	times += ["Time for small file: " + str(time.clock() - start)]
-	
-	#time large file
-	start = time.clock()
-	load_files_from_dir(path=path, pattern="CCMSLIB00000574963.ms")
-	times += ["Time for large file: " + str(time.clock() - start)]
-	
-	#time all files
-	start = time.clock()
-	records = load_files_from_dir(path=path)
-	times += ["Time for all files: " + str(time.clock() - start)]
-	
-	#time all files but just reading things in as strings into a list, with no manipulation other than split()
-	start = time.clock()
-	string_list = []
-	for filename in glob.glob("*.ms"):
-		file = open(os.path.join(path, filename), 'r')
-		for line in file:
-			string_list += line.split()
-		file.close()
-	times += ["Time for all files, no manipulation: " + str(time.clock() - start)]
-	
-	for time in times:
-		print(time)
-		
-	'''counts = {}
-	compoundCounts = {}
-	formulaCounts = {}
-	for record in records:
-		name, dict = record
-		for key in dict.keys():
-			if(key in counts):
-				counts[key] += 1
-			else:
-				counts[key] = 1
-	
-		if(dict["compound"] in formulaCounts):
-			compoundCounts[dict["formula"]] += 1
-		else:
-			compoundCounts[dict["formula"]] = 1
-	
-		if(dict["formula"] in formulaCounts):
-			formulaCounts[dict["formula"]] += 1
-		else:
-			formulaCounts[dict["formula"]] = 1
-		
-	print("Number of files: " + str(len(list(glob.glob("*.ms")))))
-
-	print()
-	print("field counts")	
-	for key in counts:
-		print(str(key) + " : " + str(counts[key]))
-	
-	print()
-	print("compoundCounts")
-	for key in compoundCounts:
-		if(compoundCounts[key] > 1):
-			print(str(key) + " : " + str(compoundCounts[key]))
-	
-	print()
-	print("formulaCounts")
-	for key in formulaCounts:
-		if(formulaCounts[key] > 1):
-			print(str(key) + " : " + str(formulaCounts[key]))'''
-	
 if __name__ == "__main__":
 
-    main()
-			
+    main(parentpath=os.getcwd())

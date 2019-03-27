@@ -15,6 +15,10 @@ class GenbankFile():
 	def decompose_tags(self):
 		return [prediction.decompose_tag() for prediction in self.predictions]
 		
+	'''Returns a list of dictionaries of counts of all unique components possibly in each predicted tag.'''
+	def multi_component_counts(self):
+		return [prediction.component_counts() for prediction in self.predictions]
+		
 	'''Returns all unique components in the Genbank file.'''
 	def unique_components(self):
-		return list(set(itertools.chain.from_iterable([prediction.unique_components() for prediction in self.predictions])))
+		return list(set([comp for prediction in self.predictions for comp in prediction.unique_components()]))

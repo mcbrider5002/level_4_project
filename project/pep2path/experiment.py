@@ -1,26 +1,29 @@
 import itertools
 import os
+import random
+import numpy as np
 from statistics import mean
 
-from spectra.mgfParser import load_files_from_dir as mgfparser
-from spectra.MassSpectrum import MassSpectrum
-from spectra.Tag import Tag
-from spectra.SpectrumTags import SpectrumTags
+from .spectra.mgfParser import load_files_from_dir as mgfparser
+from .spectra.MassSpectrum import MassSpectrum
+from .spectra.Tag import Tag
+from .spectra.SpectrumTags import SpectrumTags
 
-from genbank.gbkParser import parse_genbank
-from genbank.aanames import AA_names
-from genbank.CDSPrediction import CDSPrediction
-from genbank.GenbankFile import GenbankFile
+from .genbank.gbkParser import parse_genbank
+from .genbank.CDSPrediction import CDSPrediction
+from .genbank.GenbankFile import GenbankFile
 
-import comparisons as compare
+from .masstables import AA_names
+
+from . import comparisons as compare
 
 '''Given a list of strings filters out any that are not present in the AA table (case-insensitive).'''
 def only_AAs(ls):
 	return [component for component in ls if (component[0].upper() + component[1:].lower()) in AA_names]
 
 '''Read according to antiSMASH format all genbank files contained within the specified directory matching a name in filenames_path.'''
-def get_gbks(path=os.path.join(os.path.join(os.path.join(os.getcwd(), "genbank"), "justin-20181022")),
-				filenames_path="dataset.out"):
+def get_gbks(path=os.path.join(os.path.join(os.path.join(os.path.dirname(__file__), "genbank"), "justin-20181022")),
+				filenames_path=os.path.join(os.path.dirname(__file__), "dataset.out")):
 	gbk_dataset = open(filenames_path, 'r')
 	gbk_names = [gbk_name.strip() for gbk_name in gbk_dataset]
 	gbk_files = [parse_genbank(path, gbk_name) for gbk_name in gbk_names]
@@ -47,18 +50,18 @@ def match_randomised(spectra_names, spectra_tags, gbk_components, headers, count
 	prints this information out.'''
 def print_simple(headers, counts, out):	
 	print("---%s---\n" % out)
-	for header, ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in zip(headers, counts):
-		print("%s\n Total Correct: %d\n" % (header, total_correct) +
+	for header, ((best_spectrum, best_gbk, best_score), score_sum, avg) in zip(headers, counts):
+		print("%s\n Score Sum: %d\n" % (header, total_correct) +
 				"Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score) +
-				"Comparisons: %d Spectra_Components: %d Gbk_Components: %d Gbk_Files: %d\n" % (comparisons, spectra_total, total_gbk_comps, total_gbk_files))
+				"Average Score: %d\n" % (avg))
 
 '''Given a list of tables in the format [[(best_spectrum, best_gbk, best_score)]], prints this information out.'''				
 def print_alignment(headers, counts, out):
 	print("---%s---\n" % out)
-	for header, (best_spectrum, best_gbk, best_score) in zip(headers, counts):
-		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score))
+	for header, ((best_spectrum, best_gbk, best_score), avg) in zip(headers, counts):
+		print("%s\n" % (header) + "Best Spectrum: %s Best Gbk: %s Best Correct: %d Average: %d\n" % (best_spectrum, best_gbk, best_score, avg))
 		
-def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=14):
+def print_table(title, group_headers, column_headers, split_comparisons, label_width=6, column_width=18):
 
 	format_length = lambda l: "%-" + str(l) + "s"
 	column_no = len(column_headers)
@@ -88,40 +91,40 @@ def print_table(title, group_headers, column_headers, split_comparisons, label_w
 	
 	print()
 		
-def print_simple_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_intersection_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=18):
 
 	for headerList, countList, out in table_data:
 	
-		countList = [(best_score, total_correct, comparisons)
-						for ((best_spectrum, best_gbk, best_score), total_correct, comparisons, spectra_total, total_gbk_comps, total_gbk_files) in countList]
+		countList = [(best_score, total_correct, avg)
+						for ((best_spectrum, best_gbk, best_score), score_sum, avg) in countList]
 		
 		actualComps = [countList[0]]
 		shuffledComps = countList[1:1+shuffled_iters]
 		randomComps = countList[1+shuffled_iters:]
 		
 		print_table(out, ("Normal", "Shuffled", "Random"), 
-						 ("Best Match", "Total Correct", "Comparisons"),
+						 ("Best Match", "Score Sum", "Average"),
 						 [actualComps, shuffledComps, randomComps], 
 						 label_width=label_width, 
 						 column_width=column_width)
 		
-def print_complex_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=14):
+def print_alignment_tables(shuffled_iters, random_iters, table_data, label_width=6, column_width=18):
 	
 	for headerList, countList, out in table_data:
 	
-		countList = [(best_score,) for (best_spectrum, best_gbk, best_score) in countList]
+		countList = [(best_score, avg) for ((best_spectrum, best_gbk, best_score), avg) in countList]
 		
 		actualComps = [countList[0]]
 		shuffledComps = countList[1:1+shuffled_iters]
 		randomComps = countList[1+shuffled_iters:]
 		
 		print_table(out, ("Normal", "Shuffled", "Random"), 
-						 ("Best Score",),
+						 ("Best Score", "Average"),
 						 [actualComps, shuffledComps, randomComps], 
 						 label_width=label_width, 
 						 column_width=column_width)
 
-def experiment(shuffled_iters, random_iters, comparator, printer, table_printer):
+def experiment(shuffled_iters, random_iters, comparator, printer, table_printer, preprocess_s):
 
 	gbk_files, gbk_names = get_gbks()
 
@@ -137,7 +140,6 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 							
 	mass_thresholds = [0.01, 0.001, 0.00001] *2
 	intensity_thresholds = [0.05, 0.005] *3
-	intensity_thresholds = [0.05]
 
 	outs = ["matching_0.01Mass_0.05Inten", "matching_0.001Mass_0.005Inten", "matching_0.00001ppmMass_0.05Inten", 
 												"matching_0.01Mass_0.005Inten", "matching_0.001Mass_0.05Inten"]
@@ -150,6 +152,7 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 		spectra_names = [str(spectrum.id) for spectrum in msagg.spectra]
 		msagg.filter_intensity_local(intensity_thresholds=[intensity_threshold*mint for mint in msagg.max_intensity_local()])
 		spectra = msagg.find_sequence_tags(mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+		spectra = preprocess_s(spectra)
 		
 		counts = []
 		counts.append(comparator(spectra_names, spectra, gbk_names, gbk_files))
@@ -163,17 +166,30 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer)
 	
 	table_printer(shuffled_iters, random_iters, table_data)
 
+def intersection_experiment(shuffled_iters=5, random_iters=5):
+	def preprocess_s(spectra): return [tags.unique_components() for tags in spectra if tags.unique_components()]
+	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_intersection_tables, preprocess_s)
+
 def simple_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_simple_tables)
+	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
+	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
+		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scores=compare.simple_score())
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
 	
-def alignment_experiment(shuffled_iters=5, random_iters=5):
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_complex_tables)
+def p2p_experiment(shuffled_iters=5, random_iters=5):
+	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
+	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
+		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.p2pscore())
+	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
+	
+def main():
+	s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
+	g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]
+	spectrum_name, genbank_name, score = compare.score_alignments([str(s)], s, [str(g)], g)
+	print("Spectrum: " + spectrum_name)
+	print("Genbank: " + genbank_name)
+	print("Score: " + str(score))
+	
+if __name__ == "__main__":
 
-s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
-g = [[["Ser", "Thr"], ["Val"], ["Ile", "Ile", "Ile"], ["Thr", "Gly"]]]
-spectrum_name, genbank_name, score = compare.compare_alignment([str(s)], s, [str(g)], g)
-print("Spectrum: " + spectrum_name)
-print("Genbank: " + genbank_name)
-print("Score: " + str(score))
-
-#alignment_experiment()
+    main()
