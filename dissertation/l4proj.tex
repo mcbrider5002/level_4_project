@@ -316,7 +316,7 @@ One module must handle the parsing of any relevant MS data file formats from our
 
 This design permits us to separate our implementation of the Pep2Path algorithms from the data fed into them, whilst still providing an end-to-end implementation from raw MS data and antiSMASH data to match scoring. For example, one would be able to entirely remove the MS package, replace it with another that provides the same interfaces and sequence tags as output (perhaps using a different algorithm for MS-sequencing) and Pep2Path should function unchanged.
 
-\section{Algorithms}
+\section{Algorithms} \label{algorithms}
 
 During this section, we describe precisely the various algorithms we use for this project - note that for MS-sequencing and NRP2Path, we do not specify a mass table/alphabet respectively, and allow the user to provide this. In the case of mass spectra this is totally context-dependent on the molecules being fragmented - in the case of NRP2Path, different predictors may use different alphabets, and so different alphabets will be provided implicitly with the provision of different scoring functions.
 
@@ -573,7 +573,7 @@ We also implement a few miscellaneous parsers required to get the data for the c
 
 Finally, we implement part of a CLI for the program - although it doesn't quite support running the program as a standalone, it does allow the running of several scripts, and provides a skeleton for the program to be used in this way.
 
-\section{Performance}
+\section{Performance} \label{performance}
 
 Here we describe the empirical performance of our algorithms. The idea is not to give a precise benchmark (development and testing was performed on a relatively modest home machine - Intel Core i7-8550U Processor, 24GB RAM - where in practise we might use dedicated hardware) but rather to confront the algorithmic problems involved in development and attempt to measure a very rough timescale on which these algorithms perform in practise.
 
@@ -714,6 +714,28 @@ Non-functional requirements are a little more subjective and complicated - unfor
 
 %==================================================================================================================================
 \chapter{Conclusion}    
+
+\section{Summary}
+
+In conclusion, we have implemented a piece of software that implements the functionality of the original Pep2Path. We:
+\begin{itemize}
+\item Outline its motivation as a piece of software to match mass spectrometry data to biosynthetic gene cluster predictions, in order to automate the identification of natural products and aid the drug identification pipeline.
+\item Describe its design, examining its architecture and closely analysising the algorithms used and their performance.
+\item Describe the implementation, including language choice, the software design practises we aimed to follow and the performance of our software with respect to computational time, offering future suggestions for improving it.
+\item Demonstrate the correctness of this software by several methods: automated testing, experiments with the behaviour of scoring functions used and by partial replication of the original experiments used to demonstrate the correctness of its predecessor.
+\end{itemize}
+
+Overall, our algorithms match those presented in Pep2Path, with some minor simplifications to NRP2Path. Our results show that our implementation of RiPP2Path matches that of the original Pep2Path, and our automated testing gives us strong indications of correctness on all other fronts. Additionally, our experiments with our scoring mechanisms shows that in general they provide useful scores, by assigning the best score to a perfect match and generally decreasing scores as one moves away from a perfect match, and mismatches penalise scores proportionally to how significant the mismatch is within the overall context. Our implementations also run in reasonable time (we do not provide precise benchmarks - they are not especially important) - on the order of minutes for most cases, and approximately an hour on large data in one case. Only NRP2Path seemed to fail to terminate when given hours to do so, and only when being run on very large data. We also implement this software in adherence with software design practices, and therefore hopefully provide software that is clean, concise and maintainable.
+
+\section{Future Work}
+
+For future work, there are three main points we think are important: \textbf{Correctness}, \textbf{Performance} and \textbf{Extension}.
+
+\begin{itemize}
+\item \textbf{Correctness:} So far we have demonstrated the broad correctness of our software via \textit{controlled experiments} on \textit{synthetic data} via the automated testing and scoring experiments. There are a few miscellanea in this area still to be addressed; for example it might be useful to implement the other suggestions for automated testing we outline in Section \ref{scoregraphs}. However we think the priority in this region is to begin running \textit{natural experiments} on real data and get empirical feedback from the real world. The first step in this process would be to complete the rest of the Pep2Path experiments; but there may be other datasets for which this would be helpful. It may also be helpful to integrate Pep2Path v2 with a more sophisticated mass spectrometry module, so that we don't fall prey to ``Garbage In, Garbage Out" - Pep2Path depends on these inputs.
+\item \textbf{Performance:} Our algorithms in general perform well in terms of running time, but NRP2Path in particular is limited to not being able to complete its work on larger datasets. The most important factor in this by our estimation is to improve the factorial-time algorithm - but we suggest many other algorithmic improvements in Section \ref{algorithms} and more software-oriented suggestions in Section \ref{performance}. It may also be useful to get precise benchmarks for performance, especially as we vary the number of assembly-blocks in a Genbank prediction - this is likely to be where the largest bottleneck lies.
+\item \textbf{Extension:} Our work is far from complete! There are many other directions which this software could be taken - for example, it could utilise RiPPQuest-like methods (see Section \ref{ripps}) or implement new scoring functions, such as the Levenshtein distance. Our work is largely informed from the original paper and the computer science and software development end of things - there are likely to be many improvements that could come from biochemistry!
+\end{itemize}
 
 %==================================================================================================================================
 %
