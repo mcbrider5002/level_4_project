@@ -523,19 +523,17 @@ Additionally, like most modern high-level languages, Python is also platform-ind
 
 We chose firstly to implement our representation of a mass spectrum as an object; since it is data that goes through multiple transformations (the sorting, intensity filtering preprocessing steps, followed by tag searching), we chose to define a standard interface for this data, packaged with standard operations, in the class MassSpectrum. Additionally, we chose to implement aggregate operations in a new class MassSpectraAggregate, and while the dictionaries of tags we returned from our tag search methods were not originally implemented as classes, we chose to implement them this way later in order to simplify their handling and provide a standard way of packing the data in the absence of a type system. By this process, we hope to encapsulate our data with standard operations, and provide a standard interface to end-users of the software.
 
-In order to implement the MassSpectrum class, we made heavy use of NumPy, a Python library for high-speed vectorised numerical operations, achieving its speed by acting as a wrapper around an implementation in C \cit{k&r}, and we implemented the storage of mass peaks with NumPy's key data structure, the NumPy array. This gave us access to NumPy's rich standard libraries for sorting, filtering, etc (this could also be done within Python, but NumPy is faster and more convenient for tabular data such as our pairs of Mass, Intensity) and we implemented the edge-discovery algorithm by utilising NumPy's vectorised operations over the array. For path discovery, we instead used a list of Python dictionaries, where each dictionary represented a node and had a key for each destination of an edge, and a value corresponding to that key for the edge's label. This implementation is sparse and thus not taxing on memory, but it is not very sophisticated and thus it is possible there exists something more performant - however, it would likely be better to improve the overall algorithm used for mass spectrometry first before concerning ourselves with the efficiency of this particular data structure.
+In order to implement the MassSpectrum class, we made heavy use of NumPy, a Python library for high-speed vectorised numerical operations, achieving its speed by acting as a wrapper around an implementation in C \cit{k&r}, and we implemented the storage of mass peaks with NumPy's key data structure, the NumPy array. This gave us access to NumPy's rich standard libraries for sorting, filtering, etc (this could also be done within Python, but NumPy is faster and more convenient for tabular data such as our pairs of mass and intensity) and we implemented the edge-discovery algorithm by utilising NumPy's vectorised operations over the array. For path discovery, we instead used a list of Python dictionaries, where each dictionary represented a node and had a key for each destination of an edge, and a value corresponding to that key for the edge's label. This implementation is sparse and thus not taxing on memory, but it is not very sophisticated and thus it is possible there exists something more performant - however, it would likely be better to improve the overall algorithm used for mass spectrometry first before concerning ourselves with the efficiency of this particular data structure.
 
-\textbf{<note on sequence tag notation, particularly the [A, B, C] case and how this affects default implementations of sequence tag comparison>}
+We must also address an important note on how we choose to represent strings. Within the internals of the Tag object, we represented them as a string of components, joined by dashes, with a standard method to split these and produce a list of components for further processing. In order to cut down on the number of tags being output, whenever an edge has multiple labels, instead of outputting multiple tags e.g. ``...-Gly-..." and ``...-Val-...", we instead output a single tag with both listed in square brackets e.g. ``...-[Gly, Val]-...". This allows us to save space where there would be multiple tag labels, but the string representation complicates handling somewhat - although the standard method to get it in list format (which our comparisons use) makes it easier, ideally we would represent these via some internal format and then convert it into the string it is currently represented as when necessary. Additionally, we implement normalisation as a separate feature as part of comparisons; in order to achieve encapsulation and cleaner interfaces, future development should implement a standard method allowing normalisation (perhaps parameterising the normalisation function).
 
-\textbf{note: choice operators}
-
-We also implement the accessory plotting tag and spectra-plotting tool we mentioned in the requirements earlier - an illustration can be seen in Figure \ref{fig:spectragraph}.
+We also implement the accessory plotting tag and spectra-plotting tool we mentioned in the requirements earlier using the Python library Matplotlib \cit{matplotlib} - an illustration can be seen in Figure \ref{fig:spectragraph}.
 
 \begin{figure} \label{fig:spectragraph}
     \centering
     \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/spectragraph.png}}%
 
-    \caption{An example plot of a detected length six tag above the mass-spectrometry readings for the molecule Cyclosporin in which it was found, generated using our MatPlotLib-based accessory plotting tool. The tag His-Ser-Asp-Gly-Gly-Gly can be seen plotted along the peaks where it was found - the colours of the arrows used are tied to the label, and the user may provide a mapping from labels to colours. Note that this tag isn't necessarily correct - it's just an example of a visualisation of a tag arbitrarily chosen from the examples our algorithm found.}
+    \caption{An example plot of a detected length six tag above the mass-spectrometry readings for the molecule Cyclosporin in which it was found, generated using our Matplotlib-based accessory plotting tool. The tag His-Ser-Asp-Gly-Gly-Gly can be seen plotted along the peaks where it was found - the colours of the arrows used are tied to the label, and the user may provide a mapping from labels to colours. Note that this tag isn't necessarily correct - it's just an example of a visualisation of a tag arbitrarily chosen from the examples our algorithm found.}
 
     \label{fig:spectragraph}
 \end{figure}
@@ -546,9 +544,11 @@ For the I-functions, we were able to scrape the classes used to calculate the SV
 
 One notable caveat is where the alphabet is concerned; the SVM method of course has a fixed alphabet, needing to know in advance how its various classes are constructed. When unknown components are used, it degenerates into evaluating \(1.0\) on an exact match and \(0.0\) otherwise; similarly we implement a 'prior probability' for any element which cannot be found in the Pdict as equal to the uniform probability of the elements contained. (This is not strictly speaking a probability, because while the elements in the Pdict sum to one, making them valid probabilities, adding any other component to this with a nonzero probability invalidates this. Since the probability is just a Bayes Rule inspired mechanism for calculating the score, and we do not need to rely on it having probabilistic properties, this shouldn't affect anything.)  We implement this this way so that it can generalise even to data with rare amino acids it doesn't know, but note that its performance will drop and it will not be appropriate for entirely unfamiliar datasets. Since we only calculate these values in order to compare them, this effectively 'factors out' the prior probability in lieu of more information about the population from which a sample originates.
 
-\textbf{<note to mention constant-time lookup tables for amino acid matches>}
+Additionally, an important note is that our alphabet size is relatively small compared to the size of the data we are computing, so under normal circumstances, we would be continuously recomputing the values of functions between component matches. Instead, as the original Pep2Path does, we precompute a table of values, giving the values of all possible matches between two amino acids. In order to implement this, we use a nested dictionary structure, where when supplying a key to the external dictionary, in return we receive an internal dictionary which contains the other amino acid in the matching as a key, and the result of the function as the value. For the 20 proteinogenic amino acids, this is a table of 400 values - assuming they are 32-bit integers storing the values, approximately a kilobyte of memory is required to store the values in this table. (In practise, the table will be larger due to storing the dictionary structures and not just the values, but this gives an indication of the overall storage requirement.) Even if we had an alphabet size of 20000, storing the values requires approximately a gigabyte of storage space - a very reasonable requirement, given that this is unrealistically large!
 
-One of our aims was the flexibility of the scoring system; in order to achieve this we wanted to have the ability to compose the scoring function's behaviour into the behaviour of larger functions i.e. the alignment comparison used in NRP2Path. The ability to pass around functions as first-class citizens makes this easy, but then the caller has to specify the parameters chosen. While we could have chosen to utilise variable arguments, this would then require each called function to parse its arguments, and any reader to infer the structure of those arguments; instead we chose to fix the argument list for each scoring function so that they could be called with the same fixed set of arguments; specifically a sequence tag and a set of Genbank predictions.
+On the other hand, precomputing the values like this means that there is some overhead at the start (constant-time with the number of input items) but allows us to avoid recomputing function values for the match between amino acids, using the O(1) time lookup of a hashmap. For an example of the alternative, we could naively implement the SVM class match by searching a component's amino acid class for the other amino acid in the matching; this is linear with the size of the class. While this is a small performance improvement - although wrapped inside the factorial-time of the alignment comparison - it generalises to more complicated functions. Therefore, we achieve better running times at a small space cost.
+
+Furthermore one of our aims was the flexibility of the scoring system; in order to achieve this we wanted to have the ability to compose the scoring function's behaviour into the behaviour of larger functions i.e. the alignment comparison used in NRP2Path. The ability to pass around functions as first-class citizens makes this easy, but then the caller has to specify the parameters chosen. While we could have chosen to utilise variable arguments, this would then require each called function to parse its arguments, and any reader to infer the structure of those arguments; instead we chose to fix the argument list for each scoring function so that they could be called with the same fixed set of arguments; specifically a sequence tag and a set of Genbank predictions.
 
 Having done this, however, each function would then have its own set of parameters that would need to be supplied to it in addition to the common operands. To solve this problem, we might use a factory method; a higher-order function which takes scoring-function-specific parameters, and emits a fixed scoring function adapted to the parameters given. This would allow us to compose the behaviour of the scoring function independently of the caller. However, there is one additional subtlety: because of our dictionary-based approach to computing I-values, we would then have to compose more behaviour onto this function (the matching dictionary) as it obtained information on the spectrum. Computing the lookup dictionary inside the function's scope would defeat the purpose of using it in the first place, and therefore we must compose behaviour onto the function from outside its scope. Therefore there must be some separate intermediary that the caller can access in order to be able to create the lookup dictionaries with the list of spectra it receives. However, this behaviour shouldn't be built-into the caller either; this would defeat our aim of composability. 
 
@@ -557,6 +557,7 @@ If we attempted to continue using higher-order functions we would have to awkwar
 \textbf{<note to talk about itertools simplifying much of combinatorial maths involved - particularly much of the work of nrp2path can be reduced to two lines (three with optimisation)>}
 
 \textbf{<note to talk about use of bio for genbank sections and ripp2path - std implementation of biological utilities>}
+Additionally, in the parsing 
 
 \textbf{<note to discuss ambiguities in original design, and how we implemented them>}
 
@@ -634,11 +635,54 @@ This doesn't make our testing procedure infeasible, however; this effect becomes
 
 Alternatively, another experimental design would be to choose which component to mutate next deterministically, or to choose randomly but only choose components that haven't already been mutated. However, an exhaustive search of the scoring space is impossible - or at least very computationally expensive for longer tags, as it will be exponential with the size of the alphabet - so to take these approaches would be to encode certain assumptions about the order we perform mutations in. This bias is unlikely to matter, but we choose to avoid it in favour of exploring the scoring space more randomly at the cost of having a more meandering procedure. We \textit{do} still encode these assumptions to a certain extent by iteratively mutating the same group of mutants, but this enables us to 'walk' the scoring space, and have each group of mutants immediately comparable to the previous, so it is an acceptable compromise here.
 
-\textbf{note: results go here}
+\begin{figure} \label{fig:jaccards}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/jaccards.png}}%
+
+    \caption{Four plots of Jaccard Similarity for different tag lengths.}
+
+    \label{fig:jaccards}
+\end{figure}
+
+\begin{figure} \label{fig:jaccard20}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/jaccard20.png}}%
+
+    \caption{An extended plot of Jaccard Similarity, for a length 20 tag. In general this is an unrealistically long tag, but we extend the scoring function in order to show the general trend more clearly.}
+
+    \label{fig:jaccard20}
+\end{figure}
+
+\begin{figure} \label{fig:simples}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/simples.png}}%
+
+    \caption{Four plots of the alignment comparison with the simple Inverse Normalised Hamming Distance score for different tag lengths.}
+
+    \label{fig:simples}
+\end{figure}
+
+\begin{figure} \label{fig:p2ps}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/p2ps.png}}%
+
+    \caption{Four plots of the alignment comparison with the original NRP2Path score for different tag lengths.}
+
+    \label{fig:p2ps}
+\end{figure}
 
 Note also that checks on these properties can be implemented by means of automated testing for the scoring functions; we implement a check on property 1 by performing the iterative mutation process, taking the scores sorted in non-decreasing order by number of mutations, and then use a sorting algorithm to sort in non-increasing order of score; the first value should be the score for no mutations in this case. It would also be possible to enforce properties 2 (by iteratively generating certain mismatches in the tag and checking if the score decreases) and 3 (by performing the same process but instead comparing the drops in score between tag lengths as mismatches are added) but we do not currently implement these at this time for the reasons we outlined at the start of this chapter.
 
 \section{Original Pep2Path Experiments}
+
+\begin{figure} \label{fig:ripp2path}
+    \centering
+    \makebox[\linewidth][c]{\includegraphics[width=1.0\linewidth]{images/ripp2path.png}}%
+
+    \caption{The table of results the RiPP2Path algorithm produced searching for the tag VHFVGW(I/L) inside the Streptomyces coelicolorA3(2) genome.}
+
+    \label{fig:ripp2path}
+\end{figure}
 
 \textbf{<note to include original pep2path results(?) - this shows that we have a platform capable of implementing various kinds of scoring function, and our implementations themselves are (partially) correct but I may not have time to actually collect these results, so in this case I should just outline the procedure>}
 
