@@ -244,7 +244,6 @@ def score_alignment(spectrum, gbk, scorer=simple_score()):
 '''Used to score a group of spectral tags and BGCs against one another.'''
 def score_alignments(spectrum_names, spectra, gbk_names, gbks, scorer=simple_score()):
 	scores = [(s_name, g_name, score_alignment(s, g, scorer)) for s_name, s in zip(spectrum_names, spectra) for g_name, g in zip(gbk_names, gbks)]
-	print(scores)
 	best = max(scores, key=lambda s: s[2])
 	avg = mean([score[2] for score in scores])
 	return best, avg

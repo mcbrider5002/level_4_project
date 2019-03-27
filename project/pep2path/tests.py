@@ -135,7 +135,7 @@ def test_ripp2path_scorer(alphabet=AA_alphabet):
 	
 	frames = [genome] + [gen_gene_seq(2006, 4010) for i in range(5)] #we'll just spoof frames - those are BioPython's domain anyway
 	scores = ripp2path_scorer(seq_len, [("id", true_match)], frames)
-	scores = [score for score in scores if score[5] == scores[0][5]]
+	scores = [score for score in scores if score[5] == 1]
 	assert any([score[2] == true_match and score[3] == loc * 3 and score[4] == '+' for score in scores]), "ripp2path_scorer doesn't return a perfect match as the best score!"
 	
 def ripp_tests():

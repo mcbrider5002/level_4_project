@@ -35,7 +35,7 @@ default_colours = {
 '''Given a spectrum and a tag, plots the tag above the spectrum.
 	If you want the spectrum in its original form without any filtered-out readings, make sure to give it in that form.'''
 def drawSpectrum(spectrum, tag, colour_key=default_colours):
-	fig, ax = plt.subplots()
+	fig, ax = plt.subplots(figsize=(15, 8))
 	
 	tag_height = (spectrum.max_intensity()) * 1.01
 	text_height = tag_height * 1.01
@@ -57,7 +57,10 @@ def drawSpectrum(spectrum, tag, colour_key=default_colours):
 	
 	ax.set(xlabel="Mass (m/z)", ylabel="Intensity", title=spectrum.id)
 	ax.set_ylim(ymin=0)
+	
+	plt.tight_layout()
 
+	plt.savefig(str(spectrum.id) + ".png")
 	plt.show()
 	
 '''Plot a test spectrum.'''

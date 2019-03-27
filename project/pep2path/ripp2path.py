@@ -35,7 +35,7 @@ def convert_to_single_char(spectra_tags):
 											for s_tag in spectrum_tags.flatten_tags()
 												for tag in filter_ile(s_tag.decompose_tag())]
 
-	return [(id, "".join([one_letter_AA.get(comp.upper, 'X') for comp in tag])) for id, tag in s_tags]
+	return [(id, "".join([one_letter_AA.get(comp.upper(), 'X') for comp in tag])) for id, tag in s_tags]
 	
 '''Scoring mechanism for Ripp2Path algorithm (performs the actual work of the algorithm once all the data is formatted correctly).'''
 def ripp2path_scorer(seq_len, single_char_tags, frames, no_results=100):
@@ -58,13 +58,13 @@ def ripp2path(spectra_tags, path, file, no_results=100):
 	single_char_tags = convert_to_single_char(spectra_tags)
 	return ripp2path_scorer(seq_len, single_char_tags, frames, no_results)
 
-def ripp_printer(headers, scores, label_width=4, column_width=14, outpath=os.path.dirname(__file__), outfile="ripps.out"):
+def ripp_printer(headers, scores, label_width=4, column_width=20, outpath=os.path.dirname(__file__), outfile="ripps.out"):
 	no_entries = len(headers)
 	row_labels = "%-" + str(label_width) + "s|"
 	output_string = ("%-" + str(column_width) + "s|") * no_entries
 	with open(os.path.join(outpath, outfile), 'w') as out:
-		out.write(row_labels % "" + output_string % headers)
-		for i, score in enumerate(scores): out.write(row_labels % i + output_string % score)
+		out.write(row_labels % "" + output_string % headers + "\n")
+		for i, score in enumerate(scores): out.write(row_labels % i + output_string % score + "\n")
 	
 def test_ripp2path():
 	tags = {6 : [Tag("Val-His-Phe-Val-Gly-Trp-Ile/Leu", [], [])]}
