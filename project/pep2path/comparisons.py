@@ -17,7 +17,9 @@ def shuffle_components(gbk_files):
 	cds_numbers = reorder([len(cds) for gbk in gbk_files for cds in gbk])
 	gbk_numbers = reorder([len(gbk) for gbk in gbk_files])
 	
-	reimpose_structure = lambda ls, indices: [ls[i:j] for i, j in zip([0] + list(np.cumsum(indices)[:-1]), np.cumsum(indices))]
+	def reimpose_structure(ls, indices):
+		new_indices = np.cumsum(indices) + np.array([1 if i == len(indices) else 0 for i in range(len(indices))])
+		return [ls[i:j] for i, j in zip([0] + list(new_indices[:-1]), new_indices[1:])]
 	flattened = reorder(list(itertools.chain.from_iterable(itertools.chain.from_iterable(gbk_files))))
 	return reimpose_structure(reimpose_structure(flattened, cds_numbers), gbk_numbers)
 	

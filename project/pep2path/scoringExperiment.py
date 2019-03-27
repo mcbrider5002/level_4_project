@@ -44,17 +44,39 @@ def scoring_experiment(scoring_function, alphabet=AA_alphabet, length=random.ran
 		
 	return scores
 
-def plot_results(scores, title, loc, cmap='plasma'):
+def plot_results(scores, title, loc, cmap='plasma', ylim_set=None):
+
+	fig, ax = plt.subplots()
 
 	muts = [mutation for mutation, _, _, _ in scores]	
 	xs = list(range(max(muts) + 1))
 	
 	ys = [mean([score for m, _, _, score in scores if m == x]) for x in xs]
 	
-	fig, ax = plt.subplots()
 	ax.scatter(xs, ys, c=ys, cmap=cmap)
 	ax.set(xlabel="No. Random Mutations", ylabel="Similarity Score", title=title)
-	ax.set_ylim(ymin=0)
+	if(not ylim_set is None): ax.set_ylim(ymin=0)
+	
+	plt.tight_layout()
+	plt.savefig(loc)
+	plt.show()
+
+'''Not used: gives wonky behaviour when trying to plot multiple on the same figure.'''
+def plot_four(score_lst, titles, loc, cmap='plasma'):
+	
+	fig, ax = plt.subplots(2, 2)
+	
+	for (i, scores), title in zip(enumerate(score_lst), titles):
+		
+		muts = [mutation for mutation, _, _, _ in scores]	
+		xs = list(range(max(muts) + 1))
+		ys = [mean([score for m, _, _, score in scores if m == x]) for x in xs]
+		
+		axi = ax[i % 2, math.floor((i / 2)) % 2]
+		axi.scatter(xs, ys, c=ys, cmap=cmap)
+		axi.set(xlabel="No. Random Mutations", ylabel="Similarity Score", title=title)
+		axi.set_ylim(ymin=ylim_set)
+	
 	plt.tight_layout()
 	plt.savefig(loc)
 	plt.show()
@@ -80,7 +102,7 @@ def run_scoring_experiment():
 	#intersection experiment
 	def run_jaccard(b=8, length=4, mutations=100):
 		scores = scoring_experiment(score_unique_components, batch_size=b, length=length, mutations=mutations)
-		plot_results(scores, "Random Mutations Against Score, Jaccard Similarity, Length %d tag" % length, "jaccard%d.png" % length, cmap='plasma')
+		plot_results(scores, "Random Mutations Against Score, Jaccard Similarity, Length %d tag" % length, "jaccard%d.png" % length, cmap='viridis', ylim_set=0)
 	
 	run_jaccard(b=30, length=2, mutations=100)
 	run_jaccard(b=30, length=4, mutations=100)
@@ -89,7 +111,21 @@ def run_scoring_experiment():
 	run_jaccard(b=30, length=20, mutations=100)
 	
 	#simple alignment experiment
-	scores = scoring_experiment(simple_alignment, batch_size=10, length=4, mutations=100)
-	plot_results(scores, "Random Mutations Against Score, Simple Alignment Score", "simple_alignment.png", cmap='plasma')
+	def run_simple(b=8, length=4, mutations=100):
+		scores = scoring_experiment(score_simple_alignment, batch_size=b, length=length, mutations=mutations)
+		plot_results(scores, "Random Mutations Against Score, Simple Alignment Score, Length %d tag" % length, "simple%d.png" % length, cmap='plasma', ylim_set=0)
+		
+	run_simple(b=30, length=2, mutations=100)
+	run_simple(b=30, length=4, mutations=100)
+	run_simple(b=30, length=6, mutations=100)
+	run_simple(b=30, length=8, mutations=100)
 	
 	#p2p experiment
+	def run_p2p(b=8, length=4, mutations=100):
+		scores = scoring_experiment(score_p2p_alignment, batch_size=b, length=length, mutations=mutations)
+		plot_results(scores, "Random Mutations Against Score, Original Pep2Path Score, Length %d tag" % length, "p2p%d.png" % length, cmap='inferno')
+		
+	run_p2p(b=30, length=2, mutations=100)
+	run_p2p(b=30, length=4, mutations=100)
+	run_p2p(b=30, length=6, mutations=100)
+	run_p2p(b=30, length=8, mutations=100)

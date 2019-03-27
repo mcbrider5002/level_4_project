@@ -51,7 +51,7 @@ def match_randomised(spectra_names, spectra_tags, gbk_components, headers, count
 def print_simple(headers, counts, out):	
 	print("---%s---\n" % out)
 	for header, ((best_spectrum, best_gbk, best_score), score_sum, avg) in zip(headers, counts):
-		print("%s\n Score Sum: %d\n" % (header, total_correct) +
+		print("%s\n Score Sum: %d\n" % (header, score_sum) +
 				"Best Spectrum: %s Best Gbk: %s Best Correct: %d\n" % (best_spectrum, best_gbk, best_score) +
 				"Average Score: %d\n" % (avg))
 
@@ -95,7 +95,7 @@ def print_intersection_tables(shuffled_iters, random_iters, table_data, label_wi
 
 	for headerList, countList, out in table_data:
 	
-		countList = [(best_score, total_correct, avg)
+		countList = [(best_score, score_sum, avg)
 						for ((best_spectrum, best_gbk, best_score), score_sum, avg) in countList]
 		
 		actualComps = [countList[0]]
@@ -130,7 +130,8 @@ def experiment(shuffled_iters, random_iters, comparator, printer, table_printer,
 
 	#gbks flattened out into twice-nested lists where inner lists represent files, in them are their CDS and in them their prediction's tag as a list of strings
 	gbk_files = [gbk.decompose_tags() for gbk in gbk_files]
-	gbk_files = [[only_AAs(cds) for cds in gbk if cds] for gbk in gbk_files if gbk]
+	gbk_files = [[only_AAs(cds) for cds in gbk if only_AAs(cds)] for gbk in gbk_files]
+	gbk_files = [gbk for gbk in gbk_files if gbk]
 	
 	msagg = mgfparser()[0][1] #extract the (presumed) only mgf, ignore the filename
 
@@ -171,16 +172,16 @@ def intersection_experiment(shuffled_iters=5, random_iters=5):
 	experiment(shuffled_iters, random_iters, compare.compare_unique_components, print_simple, print_intersection_tables, preprocess_s)
 
 def simple_experiment(shuffled_iters=5, random_iters=5):
-	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
+	def preprocess_s(spectra): return [tag for tags in spectra for tag in (tags.decompose_tags()).get(tags.longest_tag, []) if tag]
 	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
 		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scores=compare.simple_score())
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
+	experiment(shuffled_iters, random_iters, compare.score_alignments, print_alignment, print_alignment_tables, preprocess_s)
 	
 def p2p_experiment(shuffled_iters=5, random_iters=5):
-	def preprocess_s(spectra): return [(tags.decompose_tags())[tags.longest_tag] for tags in spectra if tags.decompose_tags() != {}]
+	def preprocess_s(spectra): return [tag for tags in spectra for tag in (tags.decompose_tags()).get(tags.longest_tag, []) if tag]
 	def fixed_alignment(spectra_names, spectra, gbk_names, gbk_tags): 
 		compare.score_alignments(spectra_names, spectra, gbk_names, gbk_tags, scoring=compare.p2pscore())
-	experiment(shuffled_iters, random_iters, compare.compare_alignment, print_alignment, print_alignment_tables, preprocess_s)
+	experiment(shuffled_iters, random_iters, compare.score_alignments, print_alignment, print_alignment_tables, preprocess_s)
 	
 def main():
 	s =	[SpectrumTags(0, 3, {3: [Tag("Ser-Val-Gly", [], [])]})]
