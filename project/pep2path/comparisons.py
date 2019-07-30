@@ -7,7 +7,7 @@ from statistics import mean
 import numpy as np
 from collections import Counter
 
-from .masstables import kersten_names, kersten_alphabet, AA_names, AA_alphabet
+from .masstables import kersten_alphabet, AA_names, AA_alphabet
 	
 '''Given a twice-nested list, returns a new list with the internal structure and the elements themselves shuffled.'''
 def shuffle_components(gbk_files):
@@ -153,7 +153,8 @@ def create_svm_pdict():
 	return {aa.lower():(1/len(svm_alphabet)) for aa in svm_alphabet}
 
 def create_kersten_pdict():
-	return {aa.lower():(1/len(kersten_alphabet)) for aa in kersten_alphabet}
+	ka, kn, km = kersten_alphabet()
+	return {aa.lower():(1/len(ka)) for aa in ka}
 			
 def P(A, pdict):
 	return pdict.get(A, 1/len(pdict.items()))

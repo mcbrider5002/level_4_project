@@ -3,14 +3,18 @@ import os
 
 #amino acids taken from supplementary table provided by kersten et al.
 #https://www.nature.com/articles/nchembio.684
-kersten_masses, kersten_names = {}, {}
-path = os.path.join(os.path.dirname(__file__), "nchembio.684-S3.csv")
-with open(path, 'r') as file:
-	lines = [line for line in csv.reader(file)][2:] #split lines, cutting out headers
-	kersten_masses = {line[2]:line[0] for line in lines}
-	kersten_names = {line[2]:line[2] for line in lines}
-	kersten_names.update({line[1]:line[2] for line in lines})
-kersten_alphabet = set([name for name in kersten_masses.keys()])
+def kersten_alphabet():
+
+	kersten_names, kersten_masses = {}, {}
+	path = os.path.join(os.path.dirname(__file__), "nchembio.684-S3.csv")
+	with open(path, 'r') as file:
+		lines = [line for line in csv.reader(file)][2:] #split lines, cutting out headers
+		kersten_masses = {line[2]:line[0] for line in lines}
+		kersten_names = {line[2]:line[2] for line in lines}
+		kersten_names.update({line[1]:line[2] for line in lines})
+	kersten_alphabet = set([name for name in kersten_masses.keys()])
+	
+	return kersten_alphabet, kersten_names, kersten_masses
 
 #proteinogenic AAs
 AA_names = {	
