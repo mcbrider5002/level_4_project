@@ -107,60 +107,24 @@ def write_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), patt
 		
 	file.close()
 	
-def main():
-
-	path = os.path.join(os.path.dirname(__file__), "spectraData")
+def main(path=os.path.join(os.path.dirname(__file__), "spectraData")):
 	
-	#SecArgGlnPheArgIle
-	#...223959.ms
-	#prev settings: 
-	'''print_longest_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.005,
-						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.001)'''
-	#current settings:
-	'''print_longest_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=None)'''
+	def tag_write(ithres, mthres):
+		fname = "tags_" + str(mthres) + "Mass_" + str(ithres) + "Int.out"
+		
+		write_tags(path=path, pattern="*.ms", intensity_thresholds=ithres, 
+					mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE,
+					mass_threshold=mthres, lengths_to_print=range(4,100), filename=fname)
 						
-	write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.005,
-						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.001,
-						lengths_to_print=range(4,100), filename="tags_0.001Mass_0.005Int.out")
+	tag_write(0.005, 0.001)					
+	tag_write(0.05, 0.01)
+	tag_write(0.05, 0.001)				
+	#Runtime too long
+	'''tag_write(0.005, 0.01)'''
 						
-	write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.05,
-						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.01,
-						lengths_to_print=range(4,100), filename="tags_0.01Mass_0.05Int.out")
-						
-	write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.05,
-						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.001,
-						lengths_to_print=range(4,100), filename="tags_0.001Mass_0.05Int.out")
-						
-	#Too long
-	'''write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.005,
-						mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE, mass_threshold=0.01,
-						lengths_to_print=range(4,100), filename="tags_0.01Mass_0.005Int.out")'''
-						
-	write_tags(path=path, pattern="*.ms", 
-						intensity_thresholds=0.05,
-						mass_threshold = 0.00001,
-						lengths_to_print=range(4,100), filename="tags_10ppmMass_0.05Int.out")
-	
-	'''print("Parsing, converting to object...")
-	mibig_spectrum_1 = setup_mass_spectra(load_files_from_dir(path=path, pattern="CCMSLIB00000223959.ms")[0])
-	filename, mis1 = mibig_spectrum_1
-	print("Filtering intensity...")
-	mis1.filter_intensity()
-	#print(mis1.ppm_mass_tolerance(0, 0.00001))
-	#print(mis1.ms2peaks.shape)
-	print("Finding longest tag...")
-	longest, tags = mis1.find_longest_tag()
-	print(filename, longest)
-	if(longest > 0):
-		for tag in tags[longest]:
-			print(tag)'''
+	write_tags(path=path, pattern="*.ms", intensity_thresholds=0.05,
+				mass_tolerance_mode=MassSpectrum.MAX_PPM_MASS_TOLERANCE, mass_threshold=0.00001, 
+				lengths_to_print=range(4,100), filename="tags_10ppmMass_0.05Int.out")
 
 if __name__ == "__main__":
-
-    main()
+    main(cdir=os.getcwd())
