@@ -106,40 +106,6 @@ def write_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), patt
 					file.write(str(tag) + "\n")
 		
 	file.close()
-
-'''Helper to take the mibig file and automatically write the contents of corresponding files to tags.out.'''	
-def mibig_parser(inpath=os.path.join(os.path.dirname(__file__), "spectraData")):
-
-	file = open(os.path.join(os.path.dirname(__file__), "mibig_gnps_links_q3.csv"), 'r')
-	filenames = [line.split(',')[1] + ".ms" for line in file]
-	file.close()
-	
-	mass_tolerance_modes = [MassSpectrum.STATIC_MASS_TOLERANCE, 
-							MassSpectrum.STATIC_MASS_TOLERANCE, 
-							MassSpectrum.MAX_PPM_MASS_TOLERANCE] * 2
-	mass_thresholds = [0.01, 0.001, 0.00001] *2
-	intensity_thresholds = [0.05, 0.005] *3
-	outs = ["mibig_hMass_hInten", "mibi_lMass_lInten", "mibig_ppmMass_hInten", "mibig_hMass_lInten", "mibig_lMass_hInten"]
-	zipped = zip(mass_tolerance_modes, mass_thresholds, intensity_thresholds, outs)
-	
-	outpath = os.path.join(os.path.dirname(__file__), "out")
-	for mass_tolerance_mode, mass_threshold, intensity_threshold, out in zipped:
-		
-		spectra_tags = [find_longest_tag(path=inpath, pattern=filename, intensity_thresholds=intensity_threshold, 
-											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)[1]
-												for filename in filenames]
-												
-		spectra_tags = itertools.chain.from_iterable(spectra_tags) #flatten list of spectra tags
-		
-		file = open(os.path.join(outpath, (out + ".out")), 'w')
-		for spectrum_tags in spectra_tags:
-			for length in range(spectrum_tags.longest_tag):
-				if(length in spectrum_tags.tags.keys()):
-					file.write("---" + str(spectrum_tags.id) + " " + str(length) + "---\n")
-					for tag in spectrum_tags.tags[length]:	
-						file.write(str(tag) + "\n")
-		
-		file.close()
 	
 def main():
 
