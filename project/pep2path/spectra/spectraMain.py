@@ -28,8 +28,7 @@ def setup_mass_spectra(file, mass_table=AA_mass_table):
 						
 '''Convenience function to perform the multiple steps necessary to find tags and their ids.'''
 def find_longest_tag(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
-						intensity_thresholds=None,
-						mass_tolerance_mode=None, mass_threshold=0.00001):
+					  intensity_thresholds=None, mass_tolerance_mode=None, mass_threshold=0.00001):
 	
 	import time
 	
@@ -67,50 +66,41 @@ def find_longest_tag(path=os.path.join(os.path.dirname(__file__), "spectraData")
 	
 '''Prints out all the tied-longest tags and their spectrum id.'''
 def print_longest_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
-						intensity_thresholds=None,
-						mass_tolerance_mode=None, mass_threshold=0.00001):
+						intensity_thresholds=None, mass_tolerance_mode=None, mass_threshold=0.00001):
 						
 	longest_tag, spectra_tags = find_longest_tag(path=path, pattern=pattern, intensity_thresholds=intensity_thresholds, 
-											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+												  mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
 				
-	spectra_tags = filter((lambda spectrum_tags : spectrum_tags.longest_tag == longest_tag), spectra_tags) #first get all spectra with the maximum tag lengths
-	for spectrum_tags in spectra_tags: #print the id of each spectrum, its longest tag length, and all tags with the longest tag length (which should be identical to local longest)
+	#print the id of each spectrum, its longest tag length, and all tags with the longest tag length
+	for spectrum_tags in (s_t for s_t in spectra_tags if s_t.longest_tag == longest_tag):
 		print(spectrum_tags.id, spectrum_tags.longest_tag)
-		for tag in spectrum_tags.tags[longest_tag]:	
-			print(tag)
+		for tag in spectrum_tags.tags[longest_tag]:	print(tag)
 	
 '''Writes to "tags.out" on the specifed path all tags with the specified length and their spectrum id.'''	
 def write_tags(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
-						intensity_thresholds=None,
-						mass_tolerance_mode=None, mass_threshold=0.00001,
-						lengths_to_print=None, output_path=os.path.join(os.path.dirname(__file__), "out"),
-						filename="tags.out"):
+				intensity_thresholds=None, mass_tolerance_mode=None, mass_threshold=0.00001,
+				lengths_to_print=None, output_path=os.path.join(os.path.dirname(__file__), "out"), 
+				filename="tags.out"):
 						
 	longest_tag, spectra_tags = find_longest_tag(path=path, pattern=pattern, intensity_thresholds=intensity_thresholds, 
-											mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
+												  mass_tolerance_mode=mass_tolerance_mode, mass_threshold=mass_threshold)
 								
 	lengths_to_print = [longest_tag] if lengths_to_print is None else lengths_to_print #default value
 	lengths_to_print = [lengths_to_print] if isinstance(lengths_to_print, str) else lengths_to_print #take string input
-	lengths_to_print = list(filter(lambda length : length <= longest_tag and length > 0, lengths_to_print)) #remove impossible indices
+	lengths_to_print = [length for length in lengths_to_print if (length <= longest_tag and length > 0)] #remove impossible indices
 	
-	file = open(os.path.join(output_path, filename), 'w')
-	for spectrum_tags in spectra_tags: #print the id of each spectrum, the current tag length, and all tags with that length
-	
-		for length in lengths_to_print:
-		
-			if(length in spectrum_tags.tags.keys()):
-			
-				file.write(str("---" + spectrum_tags.id) + " " + str(length) + "---\n")
-				
-				for tag in spectrum_tags.tags[length]:	
-					file.write(str(tag) + "\n")
-		
-	file.close()
+	#print the id of each spectrum, the current tag length, and all tags with that length
+	with open(os.path.join(output_path, filename), 'w') as file:
+		for spectrum_tags in spectra_tags: 
+			for length in lengths_to_print:
+				if(length in spectrum_tags.tags):
+					file.write("---{} {}---\n".format(spectrum_tags.id, length))
+					for tag in spectrum_tags.tags[length]: file.write(str(tag) + "\n")
 	
 def main(path=os.path.join(os.path.dirname(__file__), "spectraData")):
 	
 	def tag_write(ithres, mthres):
-		fname = "tags_" + str(mthres) + "Mass_" + str(ithres) + "Int.out"
+		fname = "tags_{}Mass_{}Int.out".format(mthres, ithres)
 		
 		write_tags(path=path, pattern="*.ms", intensity_thresholds=ithres, 
 					mass_tolerance_mode=MassSpectrum.STATIC_MASS_TOLERANCE,
