@@ -1,14 +1,8 @@
 import os
-import numpy as np
-import itertools
 
-from .massSpectraParser import load_files_from_dir
+from .msparsers import load_files_from_dir
 from .MassSpectrum import MassSpectrum
 from .MassSpectraAggregate import MassSpectraAggregate
-from .Tag import Tag
-from .SpectrumTags import SpectrumTags
-from .tests import tests as tests
-
 from .masstables import AA_mass_table
 				
 def setup_mass_spectra(file, mass_table=AA_mass_table):

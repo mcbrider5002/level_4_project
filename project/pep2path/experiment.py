@@ -4,7 +4,7 @@ import random
 import numpy as np
 from statistics import mean
 
-from .spectra.mgfParser import load_files_from_dir as mgfparser
+from .spectra.msparsers import load_mgfs_from_dir as mgfparser
 from .spectra.MassSpectrum import MassSpectrum
 from .spectra.Tag import Tag
 from .spectra.SpectrumTags import SpectrumTags

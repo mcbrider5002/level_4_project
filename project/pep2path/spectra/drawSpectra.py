@@ -4,7 +4,7 @@ import numpy as np
 import os
 import copy
 
-from .massSpectraParser import load_files_from_dir
+from .msparsers import load_files_from_dir
 from .MassSpectrum import MassSpectrum
 from .Tag import Tag
 from .spectraMain import setup_mass_spectra

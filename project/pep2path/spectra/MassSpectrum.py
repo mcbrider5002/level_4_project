@@ -51,32 +51,23 @@ class MassSpectrum():
 		#It allows the new indices to be mapped back to their original positions in the data
 		self.mappings = []
 		
-	'''Returns string representation of object.
-		Not very elegant and mostly for debugging.
-		I wouldn't use this for anything particularly heavy.'''
-	def __str__(self):
-		base_string = (str(self.id)
-						+"\n>compound " + str(self.compound)
-						+ "\n>formula " + str(self.formula)
-						+ "\n>parentmass " + str(self.parent_mass)
-						+ "\n>ionization " + str(self.ionization)
-						+ "\n>InChI " + str(self.inchi)
-						+ "\n>InChIKey " + str(self.inchi_key)
-						+ "\n>smiles " + str(self.smiles)
-						+ "\n>ms2peaks ")
-						
-		for index in range(len(self.ms2peaks[:, 0])):
-			base_string += "\n" + str(self.ms2peaks[index, 0]) + " " + str(self.ms2peaks[index, 1])
-			
-		base_string += "\n>masstable" 
-		for compound in self.mass_table.keys():
-			base_string += "\n" + str(compound) + " " + str(self.mass_table[compound])
-			
-		#Don't know in advance what format misc data will be in so will just append it naively
-		for key in self.misc.keys():
-			base_string += "\n>" + str(key) + "\n" + str(self.misc[key])
-			
-		return base_string
+	def __repr__(self):
+		fields = [("id", self.id), 
+				  ("compound", self.compound), 
+				  ("formula", self.formula), 
+				  ("parent_mass", self.parent_mass), 
+				  ("ionization", self.ionization), 
+				  ("InChi", self.inchi), 
+				  ("InChiKey", self.inchi_key), 
+				  ("smiles", self.smiles), 
+				  ("ms2peaks", "\n".join(" ".join(map(str, row)) for row in self.ms2peaks)), 
+				  ("masstable", "\n".join("{} {}".format(k, v) for k, v in self.mass_table.items()))]
+		
+		autofill = lambda d: d if d else "NO_VALUE"
+		fstring = "".join(">{}\n{}\n".format(f, autofill(v)) for f, v in fields)
+		misc_string = "".join(">{}\n{}\n".format(k, v) for k, v in self.misc.items())
+		
+		return fstring + misc_string
 		
 	'''When indices in ms2peaks are changed, add a mapping to translate them back to the indices in the original layout.
 		Takes what the changed indices would be in the original enumeration and adds a mapping based on this.'''

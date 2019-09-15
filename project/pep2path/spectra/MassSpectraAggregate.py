@@ -11,6 +11,9 @@ class MassSpectraAggregate():
 		#List (or other iterable) containing spectra objects
 		self.spectra = spectra
 		
+	def __repr__(self):
+		return "\n\n".join(str(s) for s in self.spectra)
+		
 	'''Returns a list of spectra ids for the spectra in the order that they're held.
 		You can use this to find out which spectrum a result was generated from.'''
 	def get_spectra_ids(self):
