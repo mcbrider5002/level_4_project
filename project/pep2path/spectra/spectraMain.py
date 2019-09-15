@@ -3,22 +3,6 @@ import os
 from .msparsers import load_files_from_dir
 from .MassSpectrum import MassSpectrum
 from .MassSpectraAggregate import MassSpectraAggregate
-from .masstables import AA_mass_table
-				
-def setup_mass_spectra(file, mass_table=AA_mass_table):
-	
-	filename, dict = file
-	
-	return MassSpectrum(id=filename,
-						compound=dict["compound"], 
-						formula=dict["formula"], 
-						parent_mass=dict["parentmass"], 
-						ionization=dict["ionization"], 
-						inchi=dict["InChI"], 
-						inchi_key=dict["InChIKey"], 
-						smiles=dict["smiles"], 
-						ms2peaks=dict["ms2peaks"], 
-						mass_table=mass_table)
 						
 '''Convenience function to perform the multiple steps necessary to find tags and their ids.'''
 def find_longest_tag(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="*.ms", 
@@ -28,13 +12,12 @@ def find_longest_tag(path=os.path.join(os.path.dirname(__file__), "spectraData")
 	
 	print("Starting to parse for pattern \"" + pattern + "\"...")
 	start = time.clock()
-	records = load_files_from_dir(path=path, pattern=pattern)
+	records = load_files_from_dir(path, pattern=pattern)
 	print("Time taken: " + str(time.clock() - start))
 	
 	print("Converting to objects...")
 	start = time.clock()
-	records = [setup_mass_spectra(record) for record in records]
-	spectra = MassSpectraAggregate(records)
+	spectra = MassSpectraAggregate([spectrum for fname, spectrum in records])
 	print("Time taken: " + str(time.clock() - start))
 	
 	print("Filtering intensity...")

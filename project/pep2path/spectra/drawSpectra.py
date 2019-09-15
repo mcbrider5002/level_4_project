@@ -7,7 +7,6 @@ import copy
 from .msparsers import load_files_from_dir
 from .MassSpectrum import MassSpectrum
 from .Tag import Tag
-from .spectraMain import setup_mass_spectra
 
 #A dict specifying the default colours to use for each line
 default_colours = {	
@@ -65,8 +64,7 @@ def drawSpectrum(spectrum, tag, colour_key=default_colours):
 	
 '''Plot a test spectrum.'''
 def main():
-	record = load_files_from_dir(path=os.path.join(os.path.dirname(__file__), "spectraData"), pattern="CCMSLIB00000078177.ms")[0]
-	spectrum = setup_mass_spectra(record)
+	_, spectrum = load_files_from_dir(os.path.join(os.path.dirname(__file__), "spectraData"), pattern="CCMSLIB00000078177.ms")[0]
 	spectrum.filter_intensity(intensity_threshold=spectrum.max_intensity()*0.05)
 	spectrum.sort_by_mass()
 	spectrum_tags = spectrum.find_sequence_tags()
