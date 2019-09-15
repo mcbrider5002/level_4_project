@@ -18,11 +18,11 @@ def float_parser(dict, key, values):
 def ms2peaks_parser(dict, key, values):
 	dict[key] = np.array([line.split()[:2] for line in values[1:]], dtype=float)
 	
-'''Parses as a series of lines of text (i.e. unchanged)'''
+'''Leaves list of lines unchanged'''
 def block_parser(dict, key, values):
 	dict[key] = values
 
-'''Mapping between names of headers '>name' and the functions used to parse all data under them.'''
+'''Mapping between headers and corresponding parser for data stored under them.'''
 parsing_modes = {	
 					"parentmass": float_parser,
 					"ms2peaks": ms2peaks_parser,
@@ -52,10 +52,10 @@ def parse_ms(id, file, mass_table=AA_mass_table):
 		parser(spectrum, field, values)
 	
 	for line in filter(lambda ln: ln.strip() != "", file):
-		if(line[0] == '>'):
+		if(line[0] == '>'): #new field
 			if(field): parse()
 			field = line.split()[0][1:]
-			line = " ".join(line.split()[1:])
+			line = " ".join(line.split()[1:]) #cut off field name, but use the rest of the data
 			values = []
 		values.append(line)
 	if(field): parse()
@@ -70,7 +70,7 @@ def parse_mgf(fname, file, mass_table=AA_mass_table):
 
 	spectrum = {}
 	spectra = []
-	field = "" #names of data type
+	field = "" #name of current data type
 	values = []
 	in_spectrum = False
 	
@@ -81,9 +81,8 @@ def parse_mgf(fname, file, mass_table=AA_mass_table):
 			spectrum = {}
 			field = ""
 			values = []
-			continue
 			
-		if("END IONS" in line):
+		elif("END IONS" in line):
 			in_spectrum = False
 			if(field): spectrum[field] = values
 			
@@ -95,9 +94,8 @@ def parse_mgf(fname, file, mass_table=AA_mass_table):
 				id = "{}\n{}".format(fname, spectrum.get("TITLE", "Scan Number: UNK"))
 				kwargs = format_names(spectrum, name_dict)
 				spectra.append(MassSpectrum(id=id, mass_table=mass_table, **kwargs))
-			continue
 			
-		if(in_spectrum):
+		elif(in_spectrum):
 			if('=' in line): #new field
 				if(field): spectrum[field] = values
 				field = line.split('=')[0]
